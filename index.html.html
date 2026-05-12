@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PDV Neuquén">
+<title>PDV Neuquén — Fuerza de Ventas</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+:root {
+  --primary:#1a3a5c; --primary-l:#2563a8; --accent:#e8a020; --accent-l:#f5c04a;
+  --bg:#f0f4f8; --surface:#fff; --surface2:#f7fafc;
+  --text:#1a2436; --text2:#5a7088; --border:#d0dce8;
+  --ok:#1a7a4a; --ok-bg:#e6f4ee; --err:#c0392b; --err-bg:#fdf0ef;
+  --r:14px; --rsm:8px; --sh:0 2px 12px rgba(26,58,92,.10); --shm:0 4px 24px rgba(26,58,92,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text)}
+.screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.screen.active{display:flex}
+.header{background:var(--primary);padding:14px 16px 12px;display:flex;align-items:center;gap:12px;flex-shrink:0;padding-top:max(14px,env(safe-area-inset-top))}
+.hlogo{width:36px;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
+.htitle{flex:1}.htitle h1{font-size:17px;font-weight:600;color:#fff;line-height:1.2}
+.htitle p{font-size:12px;color:rgba(255,255,255,.65);margin-top:1px}
+.hbtn{background:rgba(255,255,255,.15);border:none;border-radius:8px;color:#fff;padding:7px 12px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px}
+.content{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:14px}
+.ctitle{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+label{font-size:14px;font-weight:500;color:var(--text);display:block;margin-bottom:6px}
+input[type=text],select,textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:15px;color:var(--text);background:var(--surface);outline:none;appearance:none;transition:border-color .15s}
+input[type=text]:focus,select:focus,textarea:focus{border-color:var(--primary-l)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a7088' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.field{margin-bottom:14px}
+.btn{width:100%;padding:14px;border-radius:var(--rsm);border:none;font-size:16px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:active{background:#122a45;transform:scale(.98)}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:active{background:#c07010;transform:scale(.98)}
+.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--border)}.btn-outline:active{background:var(--bg)}
+.btn-sm{padding:9px 14px;font-size:14px;width:auto;border-radius:8px}
+.btn-danger{background:var(--err);color:#fff}
+.camera-zone{background:#0a1a2a;border-radius:var(--r);min-height:200px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;position:relative;overflow:hidden;margin-bottom:14px;border:2px dashed #2a4a6a}
+.cam-ph{display:flex;flex-direction:column;align-items:center;gap:8px;color:rgba(255,255,255,.45);font-size:13px;z-index:1}
+.photo-badge{position:absolute;top:10px;right:10px;z-index:2;background:var(--accent);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700}
+.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.tw{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden}
+.tw img{width:100%;height:100%;object-fit:cover}
+.tdel{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(192,57,43,.9);border-radius:50%;border:none;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700}
+#map{height:200px;border-radius:var(--r);overflow:hidden}
+.mstatus{font-size:13px;color:var(--text2);margin-top:8px;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dg{background:var(--ok)}.da{background:var(--accent)}.dr{background:var(--err)}
+.toast-c{position:fixed;bottom:24px;left:16px;right:16px;z-index:9999;pointer-events:none}
+.toast{background:#1a2436;color:#fff;border-radius:10px;padding:13px 16px;font-size:14px;margin-top:8px;box-shadow:var(--shm);transform:translateY(20px);opacity:0;transition:all .25s;display:flex;align-items:center;gap:10px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:var(--ok)}.toast.err{background:var(--err)}.toast.warn{background:#b07a10}
+.nav-tabs{display:flex;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.nav-tab{flex:1;padding:10px 4px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:500;color:var(--text2);transition:color .15s}
+.nav-tab.active{color:var(--primary)}
+.nav-tab svg{width:22px;height:22px}
+.rec-item{background:var(--surface);border-radius:var(--rsm);border:1px solid var(--border);padding:12px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
+.rthumb{width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg)}
+.rinfo{flex:1;min-width:0}
+.rinfo h3{font-size:14px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rinfo p{font-size:12px;color:var(--text2);margin-bottom:1px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:var(--ok-bg);color:var(--ok)}
+.empty{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty svg{opacity:.3;margin-bottom:12px}
+.empty h3{font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text)}
+#screen-login{background:var(--primary);justify-content:center;align-items:center;padding:32px 24px}
+.login-logo{width:80px;height:80px;border-radius:20px;background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+.lbox{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:380px;box-shadow:var(--shm)}
+.lbox h2{font-size:22px;font-weight:700;color:var(--primary);text-align:center;margin-bottom:4px}
+.lbox p{font-size:14px;color:var(--text2);text-align:center;margin-bottom:24px}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.scard{background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--sh);text-align:center}
+.scard .num{font-size:28px;font-weight:700;color:var(--primary)}
+.scard .lbl{font-size:12px;color:var(--text2);margin-top:2px}
+#map-h{height:240px;border-radius:var(--r);overflow:hidden}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.info-box{background:#e8f0fe;border-radius:var(--rsm);padding:12px 14px;font-size:13px;color:#1a3a5c;margin-bottom:14px;line-height:1.6}
+.info-box strong{display:block;margin-bottom:4px;font-size:14px}
+.warn-box{background:#fff8e6;border-radius:var(--rsm);padding:12px 14px;font-size:13px;color:#7a4f00;margin-bottom:14px;line-height:1.6;border-left:3px solid var(--accent)}
+.config-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.config-row label{margin:0;flex-shrink:0;width:100px;font-size:13px}
+.config-row input{flex:1}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.pill-ok{background:var(--ok-bg);color:var(--ok)}
+.pill-warn{background:#fff8e6;color:#7a4f00}
+.pill-err{background:var(--err-bg);color:var(--err)}
+.next-send{font-size:13px;color:var(--text2);margin-top:8px;text-align:center}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-logo">
+    <svg viewBox="0 0 44 44" fill="none" width="44" height="44">
+      <path d="M8 34L22 10L36 34H8Z" fill="white" opacity=".9"/>
+      <circle cx="22" cy="26" r="5" fill="#e8a020"/>
+    </svg>
+  </div>
+  <div class="lbox">
+    <h2>PDV Neuquén</h2>
+    <p>Materiales publicitarios en punto de venta</p>
+    <div class="field">
+      <label for="li-nombre">Tu nombre completo</label>
+      <input type="text" id="li-nombre" placeholder="Ej: Carlos Rodríguez" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="li-loc">Tu localidad base</label>
+      <select id="li-loc"><option value="">— Seleccioná —</option></select>
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Ingresar
+    </button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="screen-main" class="screen">
+  <div class="header">
+    <div class="hlogo">PDV</div>
+    <div class="htitle">
+      <h1 id="hname">Vendedor</h1>
+      <p id="hloc">Localidad</p>
+    </div>
+    <button class="hbtn" onclick="goToTab('config')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M17.66 17.66l-1.41-1.41M6.34 17.66l1.41-1.41"/></svg>
+      Config
+    </button>
+  </div>
+
+  <!-- TAB REGISTRO -->
+  <div id="tab-registro" class="content tab-c">
+    <div class="card">
+      <div class="ctitle">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Punto de venta
+      </div>
+      <div class="field">
+        <label>Localidad del PDV</label>
+        <select id="pdv-loc"><option value="">— Seleccioná —</option></select>
+      </div>
+      <div class="field">
+        <label>Dirección del PDV</label>
+        <input type="text" id="pdv-dir" placeholder="Ej: Av. Argentina 1200, local 3">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        Ubicación GPS
+      </div>
+      <div id="map"></div>
+      <div class="mstatus" id="mstatus"><div class="dot da"></div><span>Obteniendo ubicación…</span></div>
+      <button class="btn btn-outline btn-sm" onclick="refreshGPS()" style="margin-top:10px">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>
+        Actualizar GPS
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Fotos de materiales publicitarios
+      </div>
+      <div class="camera-zone" id="czn" onclick="openCam()">
+        <div class="cam-ph" id="camph">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Tocá para fotografiar</span>
+          <span style="font-size:11px;opacity:.7">Afiches · carteles · exhibidores</span>
+        </div>
+        <div class="photo-badge" id="pbadge" style="display:none">0 fotos</div>
+      </div>
+      <input type="file" id="cam-input" accept="image/*" capture="environment" multiple onchange="handlePhotos(event)">
+      <div class="thumbs" id="thumbs"></div>
+      <button class="btn btn-accent" onclick="openCam()" style="margin-top:12px">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Agregar foto
+      </button>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveRecord()" style="margin-bottom:24px">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Guardar visita
+    </button>
+  </div>
+
+  <!-- TAB HISTORIAL -->
+  <div id="tab-historial" class="content tab-c" style="display:none">
+    <div class="sgrid" id="sgrid">
+      <div class="scard"><div class="num" id="s-hoy">0</div><div class="lbl">Fotos hoy</div></div>
+      <div class="scard"><div class="num" id="s-sem">0</div><div class="lbl">Esta semana</div></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Mapa de visitas
+      </div>
+      <div id="map-h"></div>
+    </div>
+    <div id="rec-list"></div>
+  </div>
+
+  <!-- TAB CONFIG -->
+  <div id="tab-config" class="content tab-c" style="display:none">
+    <div class="card">
+      <div class="ctitle">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Configuración EmailJS
+      </div>
+      <div class="warn-box">
+        <strong>⚙️ Solo el administrador configura esto una vez</strong>
+        Pegá las credenciales de tu cuenta EmailJS. Se guardan en el dispositivo.
+      </div>
+      <div class="field">
+        <label>Public Key (User ID)</label>
+        <input type="text" id="cfg-pubkey" placeholder="Ej: user_AbCdEfGhIjK">
+      </div>
+      <div class="field">
+        <label>Service ID</label>
+        <input type="text" id="cfg-svcid" placeholder="Ej: service_xxxxxxx">
+      </div>
+      <div class="field">
+        <label>Template ID</label>
+        <input type="text" id="cfg-tplid" placeholder="Ej: template_xxxxxxx">
+      </div>
+      <button class="btn btn-primary" onclick="saveConfig()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        Guardar configuración
+      </button>
+      <button class="btn btn-outline" onclick="testEmail()" style="margin-top:8px" id="btn-test">
+        Enviar email de prueba
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Envío automático semanal
+      </div>
+      <div class="info-box">
+        <strong>📅 Envío: sábados a las 13:00 hs (Argentina)</strong>
+        Un solo correo consolida <em>todos los vendedores</em>, todos los PDV de la semana, el Excel adjunto y el resumen con mapa.<br><br>
+        Destinatario: <strong>juan@tabacaleraespert.com</strong>
+      </div>
+      <div id="email-status" style="text-align:center;margin-bottom:12px">
+        <span class="status-pill pill-warn" id="spill">⏳ Esperando configuración</span>
+      </div>
+      <div class="next-send" id="next-send"></div>
+      <button class="btn btn-outline" onclick="sendWeeklyNow()" style="margin-top:12px" id="btn-send-now">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar reporte ahora (prueba)
+      </button>
+      <button class="btn btn-outline" onclick="exportExcel()" style="margin-top:8px">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Descargar Excel ahora
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="ctitle" style="color:var(--err)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        Zona de peligro
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearAllData()">Borrar todos los datos locales</button>
+      <p style="font-size:12px;color:var(--text2);margin-top:8px">Esto elimina todos los registros del dispositivo. El Excel debe haber sido enviado antes.</p>
+    </div>
+  </div>
+
+  <nav class="nav-tabs">
+    <button class="nav-tab active" id="nb-registro" onclick="goToTab('registro')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Registrar
+    </button>
+    <button class="nav-tab" id="nb-historial" onclick="goToTab('historial')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+      Historial
+    </button>
+    <button class="nav-tab" id="nb-config" onclick="goToTab('config')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M17.66 17.66l-1.41-1.41M6.34 17.66l1.41-1.41"/></svg>
+      Config
+    </button>
+  </nav>
+</div>
+
+<div class="toast-c" id="toast-c"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// LOCALIDADES
+// ─────────────────────────────────────────────
+const LOCS = ["Neuquén Capital","Plottier","Centenario","Zapala","San Martín de los Andes","Cutral Co","Plaza Huincul","Rincón de los Sauces","Chos Malal","Junín de los Andes","San Patricio del Chañar","Añelo (Capital de Vaca Muerta)","Villa La Angostura","Aluminé","Piedra del Águila","Loncopué","Andacollo","Las Lajas","Las Ovejas","Villa Pehuenia - Moquehue","Villa El Chocón","Vista Alegre","Mariano Moreno","Picún Leufú","Buta Ranquil"];
+['li-loc','pdv-loc'].forEach(id => {
+  const s = document.getElementById(id);
+  LOCS.forEach(l => { const o = document.createElement('option'); o.textContent = l; s.appendChild(o); });
+});
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+const ST = { vendedor:'', localidad:'', gps:null, photos:[], records:[], map:null, mapH:null, gpsMarker:null, timer:null };
+
+function load() {
+  try { ST.records = JSON.parse(localStorage.getItem('pdv_r')||'[]'); } catch(e){}
+}
+function persist() {
+  try { localStorage.setItem('pdv_r', JSON.stringify(ST.records.slice(-500))); }
+  catch(e) { toast('Almacenamiento lleno. Exportá el Excel.','err'); }
+}
+load();
+
+// ─────────────────────────────────────────────
+// CONFIG emailJS
+// ─────────────────────────────────────────────
+let CFG = { pubkey:'', svcid:'', tplid:'' };
+function loadCfg() {
+  try { const c = JSON.parse(localStorage.getItem('pdv_cfg')||'{}'); Object.assign(CFG, c); } catch(e){}
+  document.getElementById('cfg-pubkey').value = CFG.pubkey||'';
+  document.getElementById('cfg-svcid').value = CFG.svcid||'';
+  document.getElementById('cfg-tplid').value = CFG.tplid||'';
+  updateStatusPill();
+}
+function saveConfig() {
+  CFG.pubkey = document.getElementById('cfg-pubkey').value.trim();
+  CFG.svcid  = document.getElementById('cfg-svcid').value.trim();
+  CFG.tplid  = document.getElementById('cfg-tplid').value.trim();
+  if (!CFG.pubkey||!CFG.svcid||!CFG.tplid) { toast('Completá los tres campos','err'); return; }
+  localStorage.setItem('pdv_cfg', JSON.stringify(CFG));
+  if (typeof emailjs !== 'undefined') emailjs.init(CFG.pubkey);
+  updateStatusPill();
+  toast('Configuración guardada','ok');
+  scheduleWeekly();
+}
+function updateStatusPill() {
+  const pill = document.getElementById('spill');
+  if (CFG.pubkey && CFG.svcid && CFG.tplid) {
+    pill.className='status-pill pill-ok'; pill.textContent='✓ EmailJS configurado';
+  } else {
+    pill.className='status-pill pill-warn'; pill.textContent='⏳ Sin configurar';
+  }
+  updateNextSend();
+}
+loadCfg();
+if (CFG.pubkey && typeof emailjs !== 'undefined') emailjs.init(CFG.pubkey);
+
+// ─────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────
+function toast(msg, type='') {
+  const c = document.getElementById('toast-c');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { ok:'<polyline points="20 6 9 17 4 12"/>', err:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>', warn:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>' };
+  t.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${icons[type]||icons.warn}</svg>${msg}`;
+  c.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); }, 4000);
+}
+
+function arNow() { return new Date(new Date().toLocaleString('en-US',{timeZone:'America/Argentina/Buenos_Aires'})); }
+function fmtD(ts) { return new Date(ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function fmtT(ts) { return new Date(ts).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); }
+function fmtDT(ts) { return `${fmtD(ts)} ${fmtT(ts)}`; }
+
+// ─────────────────────────────────────────────
+// LOGIN
+// ─────────────────────────────────────────────
+function doLogin() {
+  const n = document.getElementById('li-nombre').value.trim();
+  const l = document.getElementById('li-loc').value;
+  if (!n) { toast('Ingresá tu nombre','err'); return; }
+  if (!l) { toast('Seleccioná tu localidad','err'); return; }
+  ST.vendedor = n; ST.localidad = l;
+  localStorage.setItem('pdv_sess', JSON.stringify({v:n,l}));
+  document.getElementById('hname').textContent = n;
+  document.getElementById('hloc').textContent = l;
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-main').classList.add('active');
+  initMap(); startGPS(); scheduleWeekly();
+}
+
+// ─────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────
+function goToTab(t) {
+  ['registro','historial','config'].forEach(x => {
+    document.getElementById(`tab-${x}`).style.display = x===t?'block':'none';
+    document.getElementById(`nb-${x}`).classList.toggle('active',x===t);
+  });
+  if (t==='historial') { renderRecs(); renderMapH(); updateStats(); }
+  if (t==='config') { updateStatusPill(); }
+}
+
+// ─────────────────────────────────────────────
+// MAP + GPS
+// ─────────────────────────────────────────────
+function initMap() {
+  ST.map = L.map('map',{zoomControl:false,attributionControl:false}).setView([-38.95,-68.06],12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(ST.map);
+}
+function startGPS() {
+  if (!navigator.geolocation) { setMStatus('dr','GPS no disponible'); return; }
+  navigator.geolocation.getCurrentPosition(posOK, posErr, {enableHighAccuracy:true,timeout:15000});
+}
+function refreshGPS() { setMStatus('da','Actualizando…'); navigator.geolocation.getCurrentPosition(posOK,posErr,{enableHighAccuracy:true,timeout:15000}); }
+function setMStatus(dot,msg) { document.getElementById('mstatus').innerHTML=`<div class="dot ${dot}"></div><span>${msg}</span>`; }
+function posOK(p) {
+  ST.gps = {lat:p.coords.latitude, lng:p.coords.longitude, acc:Math.round(p.coords.accuracy)};
+  ST.map.setView([ST.gps.lat,ST.gps.lng],15);
+  if (ST.gpsMarker) ST.gpsMarker.remove();
+  ST.gpsMarker = L.circleMarker([ST.gps.lat,ST.gps.lng],{radius:8,color:'#1a3a5c',fillColor:'#2563a8',fillOpacity:1,weight:2})
+    .addTo(ST.map).bindPopup(`Tu ubicación · precisión ${ST.gps.acc}m`);
+  setMStatus('dg',`Ubicación obtenida · precisión ${ST.gps.acc}m`);
+}
+function posErr(e) { setMStatus('dr',`Error GPS: habilitá el permiso de ubicación`); }
+
+// ─────────────────────────────────────────────
+// CAMERA
+// ─────────────────────────────────────────────
+function openCam() { document.getElementById('cam-input').click(); }
+function handlePhotos(evt) {
+  Array.from(evt.target.files).forEach(f => {
+    const r = new FileReader();
+    r.onload = e => resize(e.target.result, 900, url => { ST.photos.push({url,ts:Date.now()}); renderThumbs(); });
+    r.readAsDataURL(f);
+  });
+  evt.target.value='';
+}
+function resize(src, max, cb) {
+  const img = new Image();
+  img.onload = () => {
+    const ratio = Math.min(max/img.width, max/img.height, 1);
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width*ratio); c.height = Math.round(img.height*ratio);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    cb(c.toDataURL('image/jpeg',0.78));
+  };
+  img.src = src;
+}
+function renderThumbs() {
+  const b = document.getElementById('pbadge'), ph = document.getElementById('camph'), tc = document.getElementById('thumbs');
+  tc.innerHTML='';
+  if (!ST.photos.length) { b.style.display='none'; ph.style.display='flex'; return; }
+  b.style.display='block'; b.textContent=`${ST.photos.length} foto${ST.photos.length>1?'s':''}`;
+  ph.style.display='none';
+  ST.photos.forEach((p,i) => {
+    const w=document.createElement('div'); w.className='tw';
+    w.innerHTML=`<img src="${p.url}"><button class="tdel" onclick="delPhoto(${i})">×</button>`;
+    tc.appendChild(w);
+  });
+}
+function delPhoto(i) { ST.photos.splice(i,1); renderThumbs(); }
+
+// ─────────────────────────────────────────────
+// SAVE RECORD
+// ─────────────────────────────────────────────
+function saveRecord() {
+  const loc = document.getElementById('pdv-loc').value;
+  const dir = document.getElementById('pdv-dir').value.trim();
+  if (!loc) { toast('Seleccioná la localidad del PDV','err'); return; }
+  if (!dir) { toast('Ingresá la dirección del PDV','err'); return; }
+  if (!ST.photos.length) { toast('Sacá al menos una foto','err'); return; }
+  const rec = {
+    id:Date.now(), vendedor:ST.vendedor, locVend:ST.localidad,
+    locPDV:loc, dir, gps:ST.gps?{...ST.gps}:null,
+    photos:ST.photos.map(p=>({...p})), ts:Date.now()
+  };
+  ST.records.push(rec); persist();
+  ST.photos=[]; renderThumbs();
+  document.getElementById('pdv-loc').value='';
+  document.getElementById('pdv-dir').value='';
+  toast(`Guardado con ${rec.photos.length} foto${rec.photos.length>1?'s':''}`, 'ok');
+  if (rec.gps && ST.map) L.marker([rec.gps.lat,rec.gps.lng]).addTo(ST.map).bindPopup(`${dir}, ${loc}`);
+}
+
+// ─────────────────────────────────────────────
+// HISTORY
+// ─────────────────────────────────────────────
+function updateStats() {
+  const now = arNow(), tod = now.toDateString();
+  const wa = new Date(now); wa.setDate(wa.getDate()-7);
+  let h=0,s=0;
+  ST.records.filter(r=>r.vendedor===ST.vendedor).forEach(r=>{
+    const d=new Date(r.ts);
+    if (d.toDateString()===tod) h+=r.photos.length;
+    if (d>=wa) s+=r.photos.length;
+  });
+  document.getElementById('s-hoy').textContent=h;
+  document.getElementById('s-sem').textContent=s;
+}
+function renderRecs() {
+  const mine = ST.records.filter(r=>r.vendedor===ST.vendedor).slice().reverse();
+  const c = document.getElementById('rec-list');
+  if (!mine.length) { c.innerHTML=`<div class="empty"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><h3>Sin registros</h3><p>Tus visitas aparecerán aquí</p></div>`; return; }
+  c.innerHTML = mine.map(r=>`<div class="rec-item">
+    ${r.photos[0]?`<img class="rthumb" src="${r.photos[0].url}">`:`<div class="rthumb"></div>`}
+    <div class="rinfo"><h3>${r.dir}</h3><p>${r.locPDV}</p><p>${fmtDT(r.ts)}</p>
+    <span class="badge">${r.photos.length} foto${r.photos.length>1?'s':''}</span>
+    ${r.gps?`<span style="font-size:11px;color:var(--text2);margin-left:6px">📍 GPS</span>`:''}
+    </div></div>`).join('');
+}
+function renderMapH() {
+  if (!ST.mapH) {
+    ST.mapH = L.map('map-h',{zoomControl:false,attributionControl:false}).setView([-38.95,-68.06],8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(ST.mapH);
+  } else { ST.mapH.eachLayer(l=>{ if(l instanceof L.CircleMarker)l.remove(); }); }
+  const wg = ST.records.filter(r=>r.gps&&r.vendedor===ST.vendedor);
+  if (!wg.length) return;
+  const bounds=[];
+  wg.forEach(r=>{
+    bounds.push([r.gps.lat,r.gps.lng]);
+    L.circleMarker([r.gps.lat,r.gps.lng],{radius:7,color:'#1a3a5c',fillColor:'#e8a020',fillOpacity:.9,weight:2})
+      .addTo(ST.mapH).bindPopup(`<strong>${r.dir}</strong><br>${r.locPDV}<br>${fmtD(r.ts)} — ${r.photos.length} foto${r.photos.length>1?'s':''}`);
+  });
+  if (bounds.length) ST.mapH.fitBounds(bounds,{padding:[20,20]});
+}
+
+// ─────────────────────────────────────────────
+// EXCEL BUILDER
+// ─────────────────────────────────────────────
+function buildWeeklyExcel() {
+  const now = arNow(), wa = new Date(now); wa.setDate(wa.getDate()-7);
+  const week = ST.records.filter(r=>new Date(r.ts)>=wa).sort((a,b)=>a.ts-b.ts);
+
+  const det = [['Vendedor','Localidad vendedor','PDV Localidad','PDV Dirección','Fecha','Hora','Cant. fotos','Latitud','Longitud']];
+  week.forEach(r=>det.push([r.vendedor,r.locVend,r.locPDV,r.dir,fmtD(r.ts),fmtT(r.ts),r.photos.length,r.gps?+r.gps.lat.toFixed(6):'',r.gps?+r.gps.lng.toFixed(6):'']));
+
+  const byV={};
+  week.forEach(r=>{ if(!byV[r.vendedor])byV[r.vendedor]={visitas:0,fotos:0,loc:r.locVend}; byV[r.vendedor].visitas++; byV[r.vendedor].fotos+=r.photos.length; });
+  const res=[['Vendedor','Localidad','Visitas','Fotos totales']];
+  Object.entries(byV).forEach(([v,d])=>res.push([v,d.loc,d.visitas,d.fotos]));
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(det),'Detalle semanal');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(res),'Resumen por vendedor');
+  return wb;
+}
+
+function exportExcel() {
+  const wb = buildWeeklyExcel();
+  const now = arNow();
+  const fname = `PDV_Semanal_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  toast('Excel descargado','ok');
+}
+
+// ─────────────────────────────────────────────
+// EMAIL via EmailJS
+// ─────────────────────────────────────────────
+function buildEmailBody() {
+  const now = arNow(), wa = new Date(now); wa.setDate(wa.getDate()-7);
+  const week = ST.records.filter(r=>new Date(r.ts)>=wa).sort((a,b)=>a.ts-b.ts);
+  if (!week.length) return null;
+
+  const byV={};
+  week.forEach(r=>{ if(!byV[r.vendedor])byV[r.vendedor]=[]; byV[r.vendedor].push(r); });
+
+  let totalFotos=0, totalVisitas=week.length;
+  week.forEach(r=>totalFotos+=r.photos.length);
+
+  let html = `
+<div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto">
+<div style="background:#1a3a5c;padding:20px 24px;border-radius:8px 8px 0 0">
+  <h1 style="color:#fff;margin:0;font-size:20px">📊 Reporte Semanal PDV Neuquén</h1>
+  <p style="color:rgba(255,255,255,.75);margin:4px 0 0;font-size:13px">Semana del ${fmtD(wa.getTime())} al ${fmtD(now.getTime())}</p>
+</div>
+<div style="background:#f0f4f8;padding:16px 24px;display:flex;gap:16px">
+  <div style="background:#fff;border-radius:8px;padding:12px 20px;text-align:center;flex:1">
+    <div style="font-size:28px;font-weight:700;color:#1a3a5c">${totalVisitas}</div>
+    <div style="font-size:12px;color:#5a7088">Visitas totales</div>
+  </div>
+  <div style="background:#fff;border-radius:8px;padding:12px 20px;text-align:center;flex:1">
+    <div style="font-size:28px;font-weight:700;color:#1a3a5c">${totalFotos}</div>
+    <div style="font-size:12px;color:#5a7088">Fotos totales</div>
+  </div>
+  <div style="background:#fff;border-radius:8px;padding:12px 20px;text-align:center;flex:1">
+    <div style="font-size:28px;font-weight:700;color:#1a3a5c">${Object.keys(byV).length}</div>
+    <div style="font-size:12px;color:#5a7088">Vendedores</div>
+  </div>
+</div>`;
+
+  Object.entries(byV).forEach(([v,recs])=>{
+    const tf=recs.reduce((s,r)=>s+r.photos.length,0);
+    html+=`
+<div style="padding:16px 24px;background:#fff;border-top:2px solid #f0f4f8">
+  <h2 style="color:#2563a8;margin:0 0 4px;font-size:16px">${v}</h2>
+  <p style="color:#5a7088;font-size:13px;margin:0 0 12px">${recs[0].locVend} · ${recs.length} visita${recs.length>1?'s':''} · ${tf} foto${tf>1?'s':''}</p>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="background:#1a3a5c;color:#fff">
+      <th style="padding:7px 10px;text-align:left">Dirección</th>
+      <th style="padding:7px 10px;text-align:left">Localidad PDV</th>
+      <th style="padding:7px 10px;text-align:left">Fecha</th>
+      <th style="padding:7px 10px;text-align:left">Hora</th>
+      <th style="padding:7px 10px;text-align:center">Fotos</th>
+      <th style="padding:7px 10px;text-align:left">GPS</th>
+    </tr></thead>
+    <tbody>`;
+    recs.forEach((r,i)=>{
+      const bg=i%2===0?'#fff':'#f7fafc';
+      const gps=r.gps?`<a href="https://maps.google.com/?q=${r.gps.lat},${r.gps.lng}" style="color:#2563a8">Ver mapa</a>`:'—';
+      html+=`<tr style="background:${bg}">
+        <td style="padding:6px 10px">${r.dir}</td>
+        <td style="padding:6px 10px">${r.locPDV}</td>
+        <td style="padding:6px 10px">${fmtD(r.ts)}</td>
+        <td style="padding:6px 10px">${fmtT(r.ts)}</td>
+        <td style="padding:6px 10px;text-align:center"><strong>${r.photos.length}</strong></td>
+        <td style="padding:6px 10px">${gps}</td>
+      </tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  });
+
+  html+=`<div style="background:#1a3a5c;padding:14px 24px;border-radius:0 0 8px 8px;text-align:center">
+    <p style="color:rgba(255,255,255,.6);font-size:12px;margin:0">PDV Neuquén · Reporte automático semanal · Tabacalera Espert</p>
+  </div></div>`;
+  return { html, totalVisitas, totalFotos, vendedores:Object.keys(byV).length, semana:`${fmtD(wa.getTime())} al ${fmtD(now.getTime())}` };
+}
+
+async function sendWeeklyEmail() {
+  if (!CFG.pubkey||!CFG.svcid||!CFG.tplid) {
+    toast('EmailJS no configurado. Ir a Config.','err'); return false;
+  }
+  const data = buildEmailBody();
+  if (!data) { toast('Sin registros esta semana','warn'); return false; }
+
+  const now = arNow();
+  const params = {
+    to_email: 'juan@tabacaleraespert.com',
+    subject: `Reporte Semanal PDV Neuquén — ${data.semana}`,
+    message_html: data.html,
+    total_visitas: data.totalVisitas,
+    total_fotos: data.totalFotos,
+    vendedores: data.vendedores,
+    semana: data.semana,
+    fecha_envio: fmtDT(now.getTime()),
+  };
+
+  try {
+    const res = await emailjs.send(CFG.svcid, CFG.tplid, params);
+    if (res.status === 200) {
+      localStorage.setItem('pdv_last_send', now.getTime().toString());
+      toast('✓ Reporte semanal enviado correctamente','ok');
+      return true;
+    }
+  } catch(e) {
+    toast(`Error al enviar: ${e.text||e.message||'revisar credenciales'}`, 'err');
+  }
+  return false;
+}
+
+async function sendWeeklyNow() {
+  const btn = document.getElementById('btn-send-now');
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Enviando…';
+  await sendWeeklyEmail();
+  btn.disabled=false;
+  btn.innerHTML=`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar reporte ahora (prueba)`;
+}
+
+async function testEmail() {
+  if (!CFG.pubkey||!CFG.svcid||!CFG.tplid) { toast('Guardá la configuración primero','err'); return; }
+  const btn=document.getElementById('btn-test');
+  btn.disabled=true; btn.textContent='Enviando…';
+  const params={
+    to_email:'juan@tabacaleraespert.com',
+    subject:'Test PDV Neuquén — configuración correcta',
+    message_html:'<p style="font-family:Arial,sans-serif"><strong>✓ EmailJS funcionando correctamente.</strong><br>Este es un email de prueba de la app PDV Neuquén.</p>',
+    total_visitas:'—', total_fotos:'—', vendedores:'—', semana:'Prueba', fecha_envio: fmtDT(Date.now()),
+  };
+  try {
+    const res = await emailjs.send(CFG.svcid, CFG.tplid, params);
+    if (res.status===200) toast('Email de prueba enviado ✓','ok');
+    else toast('EmailJS respondió con error','err');
+  } catch(e) { toast(`Error: ${e.text||e.message}`,'err'); }
+  btn.disabled=false; btn.textContent='Enviar email de prueba';
+}
+
+// ─────────────────────────────────────────────
+// SCHEDULER — Sábados 13:00 hs Argentina
+// ─────────────────────────────────────────────
+function msUntilNextSaturday13() {
+  const now = arNow();
+  const target = new Date(now);
+  const day = target.getDay(); // 0=Dom, 6=Sab
+  const daysUntil = (6 - day + 7) % 7 || 7;
+  target.setDate(target.getDate() + daysUntil);
+  target.setHours(13, 0, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 7);
+  return Math.max(target - now, 1000);
+}
+
+function updateNextSend() {
+  const ms = msUntilNextSaturday13();
+  const d = new Date(arNow().getTime() + ms);
+  const opts = { weekday:'long', day:'2-digit', month:'long', hour:'2-digit', minute:'2-digit' };
+  const label = d.toLocaleDateString('es-AR', opts);
+  document.getElementById('next-send').textContent = `Próximo envío automático: ${label} hs`;
+}
+
+function scheduleWeekly() {
+  if (ST.timer) clearTimeout(ST.timer);
+  if (!CFG.pubkey||!CFG.svcid||!CFG.tplid) return;
+  const ms = msUntilNextSaturday13();
+  const mins = Math.round(ms/60000);
+  console.log(`[PDV] Próximo envío en ${mins} minutos`);
+  ST.timer = setTimeout(async ()=>{
+    await sendWeeklyEmail();
+    scheduleWeekly();
+  }, ms);
+  updateNextSend();
+}
+
+// ─────────────────────────────────────────────
+// RESTORE SESSION
+// ─────────────────────────────────────────────
+(function(){
+  try {
+    const s = JSON.parse(localStorage.getItem('pdv_sess')||'{}');
+    if (s.v && s.l) {
+      ST.vendedor=s.v; ST.localidad=s.l;
+      document.getElementById('hname').textContent=s.v;
+      document.getElementById('hloc').textContent=s.l;
+      document.getElementById('screen-login').classList.remove('active');
+      document.getElementById('screen-main').classList.add('active');
+      initMap(); startGPS(); scheduleWeekly();
+    }
+  } catch(e){}
+})();
+
+// ─────────────────────────────────────────────
+// DANGER ZONE
+// ─────────────────────────────────────────────
+function clearAllData() {
+  if (!confirm('¿Seguro? Esto borra TODOS los registros del dispositivo. Esta acción no se puede deshacer.')) return;
+  ST.records=[];
+  localStorage.removeItem('pdv_r');
+  toast('Todos los datos eliminados','warn');
+}
+
+// prevent iOS bounce
+document.addEventListener('touchmove', e=>{ if(e.target.closest('.content'))return; e.preventDefault(); },{passive:false});
+</script>
+</body>
+</html>
