@@ -561,24 +561,7 @@ function loadMap() {
   }).catch(function() { toast('Error al cargar mapa', 'er'); });
 }
  
-// ── CLEANUP ──
-function cleanupDocs(ids) {
-  if (!ids.length) return Promise.resolve();
-  var batch = db.batch();
-  ids.forEach(function(id) { batch.delete(db.collection('visitas').doc(id)); });
-  return batch.commit().then(function() {
-    console.log('[PDV] Limpieza: ' + ids.length + ' registros eliminados');
-  }).catch(function(e) { console.error('[PDV] Error limpieza:', e); });
-}
-function cleanExpired() {
-  var cutoff = arNow(); cutoff.setDate(cutoff.getDate() - 14);
-  db.collection('visitas').where('ts', '<', cutoff.getTime()).get().then(function(snap) {
-    if (!snap.empty) {
-      var ids = snap.docs.map(function(d) { return d.id; });
-      cleanupDocs(ids);
-    }
-  }).catch(function(e) { console.error('[PDV] Error cleanExpired:', e); });
-}
+ 
  
 // ── EXCEL ──
 function doExcel() {
@@ -655,6 +638,37 @@ function buildHtml(recs) {
   return { html: html, semana: semana, total: recs.length, tf: tf, vend: vkeys.length };
 }
  
+// ── CLEANUP ──
+function deleteDocs(ids) {
+  if (!ids.length) return Promise.resolve();
+  var batch = db.batch();
+  ids.forEach(function(id) { batch.delete(db.collection('visitas').doc(id)); });
+  return batch.commit().catch(function(e) { console.error('[PDV] Error al borrar:', e); });
+}
+ 
+function markAsSent(ids, sentAt) {
+  if (!ids.length) return Promise.resolve();
+  var batch = db.batch();
+  ids.forEach(function(id) {
+    batch.update(db.collection('visitas').doc(id), { enviado: true, enviadoTs: sentAt });
+  });
+  return batch.commit().catch(function(e) { console.error('[PDV] Error al marcar:', e); });
+}
+ 
+function cleanExpired() {
+  // Borra registros enviados hace más de 48hs
+  var cutoff48 = arNow(); cutoff48.setHours(cutoff48.getHours() - 48);
+  db.collection('visitas').where('enviado', '==', true).where('enviadoTs', '<', cutoff48.getTime()).get().then(function(snap) {
+    if (!snap.empty) deleteDocs(snap.docs.map(function(d) { return d.id; }));
+  }).catch(function() {});
+  // Borra registros sin enviar de más de 30 días
+  var cutoff14 = arNow(); cutoff14.setDate(cutoff14.getDate() - 30);
+  db.collection('visitas').where('ts', '<', cutoff14.getTime()).get().then(function(snap) {
+    if (!snap.empty) deleteDocs(snap.docs.map(function(d) { return d.id; }));
+  }).catch(function() {});
+}
+ 
+// ── EMAIL ──
 function sendWeeklyEmail() {
   var now = arNow(), wa = new Date(now); wa.setDate(wa.getDate() - 7);
   return db.collection('visitas').where('ts', '>=', wa.getTime()).orderBy('ts', 'asc').get().then(function(snap) {
@@ -673,8 +687,12 @@ function sendWeeklyEmail() {
       fecha_envio: fmtDT(Date.now())
     }).then(function(res) {
       if (res.status === 200) {
-        toast('✓ Reporte enviado — limpiando Firebase…', 'ok');
-        return cleanupDocs(docIds).then(function() { cleanExpired(); return true; });
+        var sentAt = Date.now();
+        toast('✓ Reporte enviado. El Excel queda disponible 48hs.', 'ok');
+        markAsSent(docIds, sentAt);
+        cleanExpired();
+        scheduleReminderMonday(data.total, data.tf, data.semana);
+        return true;
       }
       return false;
     });
@@ -683,6 +701,46 @@ function sendWeeklyEmail() {
     return false;
   });
 }
+ 
+// ── RECORDATORIO LUNES 9AM ──
+function msUntilNextMonday9() {
+  var now = arNow(), t = new Date(now);
+  var day = t.getDay(); // 0=Dom, 1=Lun
+  var daysUntil = (1 - day + 7) % 7 || 7;
+  t.setDate(t.getDate() + daysUntil);
+  t.setHours(9, 0, 0, 0);
+  if (t <= now) t.setDate(t.getDate() + 7);
+  return Math.max(t - now, 1000);
+}
+ 
+function scheduleReminderMonday(visitas, fotos, semana) {
+  var ms = msUntilNextMonday9();
+  setTimeout(function() {
+    var reminderHtml = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">' +
+      '<div style="background:#e8a020;padding:20px 24px;border-radius:8px 8px 0 0">' +
+      '<h1 style="color:#fff;margin:0;font-size:18px">⚠️ Recordatorio — Descargar Excel PDV</h1></div>' +
+      '<div style="background:#fff;padding:20px 24px;border-radius:0 0 8px 8px;border:1px solid #e0e0e0">' +
+      '<p style="font-size:15px;color:#1a2436">El reporte semanal del <strong>' + semana + '</strong> fue enviado el sábado.</p>' +
+      '<p style="font-size:15px;color:#1a2436;margin-top:12px">Contiene <strong>' + visitas + ' visitas</strong> y <strong>' + fotos + ' fotos</strong>.</p>' +
+      '<p style="font-size:15px;color:#1a2436;margin-top:12px">⏰ Los datos se borrarán de Firebase en las próximas horas. Descargá el Excel desde el panel Admin antes de que expire.</p>' +
+      '<div style="background:#f0f4f8;border-radius:8px;padding:12px 16px;margin-top:16px;font-size:13px;color:#5a7088">' +
+      'URL: https://juanmartinsanmiguel.github.io/pdv-neuquen/ → Admin → Descargar Excel</div></div></div>';
+    emailjs.send(SVC, TPL, {
+      to_email: DEST,
+      subject: '⚠️ Recordatorio: descargá el Excel PDV Neuquén — ' + semana,
+      message_html: reminderHtml,
+      total_visitas: visitas,
+      total_fotos: fotos,
+      vendedores: '—',
+      semana: semana,
+      fecha_envio: fmtDT(Date.now())
+    }).then(function() {
+      console.log('[PDV] Recordatorio lunes enviado');
+    }).catch(function(e) { console.error('[PDV] Error recordatorio:', e); });
+  }, ms);
+}
+ 
+// ── SCHEDULER ──
  
 function sendNow() {
   var btn = document.getElementById('bsn');
@@ -753,4 +811,3 @@ document.addEventListener('touchmove', function(e) {
 </script>
 </body>
 </html>
-
