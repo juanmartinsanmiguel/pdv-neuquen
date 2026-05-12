@@ -277,7 +277,7 @@ function checkAdminPass(){
     document.getElementById('admin-lock').style.display='none';
     document.getElementById('admin-panel').style.display='block';
     document.getElementById('admin-pass').value='';
-    loadGlobalStats(); loadGlobalMap(); updateNextSend();
+    loadGlobalStats(); loadGlobalMap(); updateNextSend(); cleanupExpired();
   } else { toast('Clave incorrecta','err'); document.getElementById('admin-pass').value=''; }
 }
 function lockAdmin(){ document.getElementById('admin-lock').style.display='block'; document.getElementById('admin-panel').style.display='none'; goToTab('registro'); }
@@ -468,9 +468,30 @@ async function exportExcel(){
 }
  
 // ── EMAIL ──
+// ── CLEANUP: borra docs enviados o con más de 14 días ──
+async function cleanupFirestore(docIds){
+  try {
+    const batch=db.batch();
+    docIds.forEach(id=>batch.delete(db.collection('visitas').doc(id)));
+    await batch.commit();
+    console.log(`[PDV] Limpieza: ${docIds.length} registros eliminados de Firebase`);
+  } catch(e){ console.error('[PDV] Error en limpieza:', e); }
+}
+async function cleanupExpired(){
+  try {
+    const cutoff=arNow(); cutoff.setDate(cutoff.getDate()-14);
+    const snap=await db.collection('visitas').where('ts','<',cutoff.getTime()).get();
+    if(!snap.empty){ const ids=snap.docs.map(d=>d.id); await cleanupFirestore(ids); }
+  } catch(e){}
+}
+ 
 async function buildEmail(){
   const now=arNow(),wa=new Date(now); wa.setDate(wa.getDate()-7);
   const snap=await db.collection('visitas').where('ts','>=',wa.getTime()).orderBy('ts','asc').get();
+async function buildEmail(){
+  const now=arNow(),wa=new Date(now); wa.setDate(wa.getDate()-7);
+  const snap=await db.collection('visitas').where('ts','>=',wa.getTime()).orderBy('ts','asc').get();
+  const docIds=snap.docs.map(d=>d.id);
   const recs=snap.docs.map(d=>d.data());
   if(!recs.length) return null;
   const byV={};
@@ -485,15 +506,20 @@ async function buildEmail(){
     html+=`</tbody></table></div>`;
   });
   html+=`<div style="background:#1a3a5c;padding:14px 24px;border-radius:0 0 8px 8px;text-align:center"><p style="color:rgba(255,255,255,.6);font-size:12px;margin:0">PDV Neuquén · Reporte automático semanal · Tabacalera Espert</p></div></div>`;
-  return {html,total:recs.length,tf,vend:Object.keys(byV).length,semana};
+  return {html,total:recs.length,tf,vend:Object.keys(byV).length,semana,docIds};
 }
  
 async function sendWeeklyEmail(){
   try {
     const data=await buildEmail();
-    if(!data){ toast('Sin registros esta semana','warn'); return false; }
+    if(!data){ toast('Sin registros esta semana','warn'); await cleanupExpired(); return false; }
     const res=await emailjs.send(SVC,TPL,{to_email:'juan@tabacaleraespert.com',subject:`Reporte Semanal PDV Neuquén — ${data.semana}`,message_html:data.html,total_visitas:data.total,total_fotos:data.tf,vendedores:data.vend,semana:data.semana,fecha_envio:fmtDT(Date.now())});
-    if(res.status===200){ toast('✓ Reporte semanal enviado','ok'); return true; }
+    if(res.status===200){
+      toast('✓ Reporte semanal enviado — limpiando Firebase…','ok');
+      await cleanupFirestore(data.docIds);
+      await cleanupExpired();
+      return true;
+    }
   } catch(e){ toast(`Error: ${e.text||e.message||'error'}`, 'err'); }
   return false;
 }
