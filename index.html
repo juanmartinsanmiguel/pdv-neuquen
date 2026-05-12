@@ -15,526 +15,742 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.min.js"></script>
 <style>
-:root{--primary:#1a3a5c;--primary-l:#2563a8;--accent:#e8a020;--bg:#f0f4f8;--surface:#fff;--text:#1a2436;--text2:#5a7088;--border:#d0dce8;--ok:#1a7a4a;--ok-bg:#e6f4ee;--err:#c0392b;--r:14px;--rsm:8px;--sh:0 2px 12px rgba(26,58,92,.10);--shm:0 4px 24px rgba(26,58,92,.15)}
+:root{--p:#1a3a5c;--pl:#2563a8;--a:#e8a020;--bg:#f0f4f8;--s:#fff;--t:#1a2436;--t2:#5a7088;--b:#d0dce8;--ok:#1a7a4a;--okb:#e6f4ee;--er:#c0392b;--r:14px;--rs:8px;--sh:0 2px 12px rgba(26,58,92,.10);--shm:0 4px 24px rgba(26,58,92,.15)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text)}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--t)}
 .screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
 .screen.active{display:flex}
-.header{background:var(--primary);padding:14px 16px 12px;display:flex;align-items:center;gap:12px;flex-shrink:0;padding-top:max(14px,env(safe-area-inset-top))}
-.hlogo{width:36px;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
-.htitle{flex:1}.htitle h1{font-size:17px;font-weight:600;color:#fff;line-height:1.2}
-.htitle p{font-size:12px;color:rgba(255,255,255,.65);margin-top:1px}
+.hdr{background:var(--p);padding:14px 16px 12px;display:flex;align-items:center;gap:12px;flex-shrink:0;padding-top:max(14px,env(safe-area-inset-top))}
+.hlogo{width:36px;height:36px;border-radius:8px;background:var(--a);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
+.htit{flex:1}.htit h1{font-size:17px;font-weight:600;color:#fff;line-height:1.2}
+.htit p{font-size:12px;color:rgba(255,255,255,.65);margin-top:1px}
 .sdot{width:9px;height:9px;border-radius:50%;background:#f87171;flex-shrink:0;transition:background .3s}
-.sdot.ok{background:#4ade80}.sdot.sync{background:var(--accent);animation:pulse 1s infinite}
+.sdot.ok{background:#4ade80}.sdot.sync{background:var(--a);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.content{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
-.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:14px}
-.ctitle{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-label{font-size:14px;font-weight:500;color:var(--text);display:block;margin-bottom:6px}
-input[type=text],input[type=password],select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:15px;color:var(--text);background:var(--surface);outline:none;appearance:none;transition:border-color .15s}
-input[type=text]:focus,input[type=password]:focus,select:focus{border-color:var(--primary-l)}
+.cnt{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+.card{background:var(--s);border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:14px}
+.ctit{font-size:13px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+label{font-size:14px;font-weight:500;color:var(--t);display:block;margin-bottom:6px}
+input[type=text],input[type=password],select{width:100%;padding:11px 14px;border:1.5px solid var(--b);border-radius:var(--rs);font-size:15px;color:var(--t);background:var(--s);outline:none;appearance:none;transition:border-color .15s}
+input[type=text]:focus,input[type=password]:focus,select:focus{border-color:var(--pl)}
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a7088' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
-.field{margin-bottom:14px}
-.btn{width:100%;padding:14px;border-radius:var(--rsm);border:none;font-size:16px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-primary{background:var(--primary);color:#fff}.btn-primary:active{background:#122a45;transform:scale(.98)}
-.btn-accent{background:var(--accent);color:#fff}.btn-accent:active{background:#c07010;transform:scale(.98)}
-.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--border)}.btn-outline:active{background:var(--bg)}
-.btn-sm{padding:9px 14px;font-size:14px;width:auto;border-radius:8px}
-.btn-danger{background:var(--err);color:#fff}
-.camera-zone{background:#0a1a2a;border-radius:var(--r);min-height:200px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;position:relative;overflow:hidden;margin-bottom:14px;border:2px dashed #2a4a6a}
-.cam-ph{display:flex;flex-direction:column;align-items:center;gap:8px;color:rgba(255,255,255,.45);font-size:13px;z-index:1}
-.photo-badge{position:absolute;top:10px;right:10px;z-index:2;background:var(--accent);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700}
-.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.fld{margin-bottom:14px}
+.btn{width:100%;padding:14px;border-radius:var(--rs);border:none;font-size:16px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.bp{background:var(--p);color:#fff}.bp:active{background:#122a45;transform:scale(.98)}
+.ba{background:var(--a);color:#fff}.ba:active{background:#c07010;transform:scale(.98)}
+.bo{background:transparent;color:var(--p);border:1.5px solid var(--b)}.bo:active{background:var(--bg)}
+.bsm{padding:9px 14px;font-size:14px;width:auto;border-radius:8px}
+.czn{background:#0a1a2a;border-radius:var(--r);min-height:200px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;position:relative;overflow:hidden;margin-bottom:14px;border:2px dashed #2a4a6a}
+.cph{display:flex;flex-direction:column;align-items:center;gap:8px;color:rgba(255,255,255,.45);font-size:13px;z-index:1}
+.pbdg{position:absolute;top:10px;right:10px;z-index:2;background:var(--a);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700}
+.thbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .tw{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden}
 .tw img{width:100%;height:100%;object-fit:cover}
 .tdel{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(192,57,43,.9);border-radius:50%;border:none;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700}
 #map{height:200px;border-radius:var(--r);overflow:hidden}
-.mstatus{font-size:13px;color:var(--text2);margin-top:8px;display:flex;align-items:center;gap:6px}
+.mst{font-size:13px;color:var(--t2);margin-top:8px;display:flex;align-items:center;gap:6px}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.dg{background:var(--ok)}.da{background:var(--accent)}.dr{background:var(--err)}
-.toast-c{position:fixed;bottom:24px;left:16px;right:16px;z-index:9999;pointer-events:none}
-.toast{background:#1a2436;color:#fff;border-radius:10px;padding:13px 16px;font-size:14px;margin-top:8px;box-shadow:var(--shm);transform:translateY(20px);opacity:0;transition:all .25s;display:flex;align-items:center;gap:10px}
-.toast.show{transform:translateY(0);opacity:1}
-.toast.ok{background:var(--ok)}.toast.err{background:var(--err)}.toast.warn{background:#b07a10}
-.nav-tabs{display:flex;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
-.nav-tab{flex:1;padding:10px 4px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:500;color:var(--text2);transition:color .15s}
-.nav-tab.active{color:var(--primary)}
-.nav-tab svg{width:22px;height:22px}
-.rec-item{background:var(--surface);border-radius:var(--rsm);border:1px solid var(--border);padding:12px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
-.rthumb{width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg)}
-.rinfo{flex:1;min-width:0}
-.rinfo h3{font-size:14px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rinfo p{font-size:12px;color:var(--text2);margin-bottom:1px}
-.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:var(--ok-bg);color:var(--ok)}
-.empty{text-align:center;padding:40px 20px;color:var(--text2)}
-.empty svg{opacity:.3;margin-bottom:12px}
-.empty h3{font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text)}
-#screen-login{background:var(--primary);justify-content:center;align-items:center;padding:32px 24px}
-.login-logo{width:80px;height:80px;border-radius:20px;background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
-.lbox{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:380px;box-shadow:var(--shm)}
-.lbox h2{font-size:22px;font-weight:700;color:var(--primary);text-align:center;margin-bottom:4px}
-.lbox p{font-size:14px;color:var(--text2);text-align:center;margin-bottom:24px}
-.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.scard{background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--sh);text-align:center}
-.scard .num{font-size:28px;font-weight:700;color:var(--primary)}
-.scard .lbl{font-size:12px;color:var(--text2);margin-top:2px}
-#map-h,#map-admin{height:240px;border-radius:var(--r);overflow:hidden}
-.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
-.spinner.dark{border-color:rgba(26,58,92,.2);border-top-color:var(--primary)}
+.dg{background:var(--ok)}.da{background:var(--a)}.dr{background:var(--er)}
+.tc{position:fixed;bottom:24px;left:16px;right:16px;z-index:9999;pointer-events:none}
+.tst{background:#1a2436;color:#fff;border-radius:10px;padding:13px 16px;font-size:14px;margin-top:8px;box-shadow:var(--shm);transform:translateY(20px);opacity:0;transition:all .25s;display:flex;align-items:center;gap:10px}
+.tst.show{transform:translateY(0);opacity:1}
+.tst.ok{background:var(--ok)}.tst.er{background:var(--er)}.tst.wn{background:#b07a10}
+.nav{display:flex;background:var(--s);border-top:1px solid var(--b);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.ntb{flex:1;padding:10px 4px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:500;color:var(--t2);transition:color .15s}
+.ntb.active{color:var(--p)}.ntb svg{width:22px;height:22px}
+.ri{background:var(--s);border-radius:var(--rs);border:1px solid var(--b);padding:12px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
+.rth{width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg)}
+.rin{flex:1;min-width:0}
+.rin h3{font-size:14px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rin p{font-size:12px;color:var(--t2);margin-bottom:1px}
+.bdg{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:var(--okb);color:var(--ok)}
+.emp{text-align:center;padding:40px 20px;color:var(--t2)}
+.emp svg{opacity:.3;margin-bottom:12px}
+.emp h3{font-size:16px;font-weight:600;margin-bottom:6px;color:var(--t)}
+#sl{background:var(--p);justify-content:center;align-items:center;padding:32px 24px}
+.llogo{width:80px;height:80px;border-radius:20px;background:var(--a);display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+.lbox{background:var(--s);border-radius:20px;padding:28px 24px;width:100%;max-width:380px;box-shadow:var(--shm)}
+.lbox h2{font-size:22px;font-weight:700;color:var(--p);text-align:center;margin-bottom:4px}
+.lbox p{font-size:14px;color:var(--t2);text-align:center;margin-bottom:24px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.sc{background:var(--s);border-radius:var(--r);padding:16px;box-shadow:var(--sh);text-align:center}
+.sc .n{font-size:28px;font-weight:700;color:var(--p)}
+.sc .l{font-size:12px;color:var(--t2);margin-top:2px}
+#mh,#ma{height:240px;border-radius:var(--r);overflow:hidden}
+.sp{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.spd{border-color:rgba(26,58,92,.2);border-top-color:var(--p)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.info-box{background:#e8f0fe;border-radius:var(--rsm);padding:12px 14px;font-size:13px;color:#1a3a5c;margin-bottom:14px;line-height:1.6}
-.info-box strong{display:block;margin-bottom:4px;font-size:14px}
-.status-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:var(--ok-bg);color:var(--ok)}
-.next-send{font-size:13px;color:var(--text2);margin-top:8px;text-align:center}
-.admin-lock{background:rgba(10,26,42,.92);border-radius:var(--r);padding:28px 20px;text-align:center;margin-bottom:14px}
-.admin-lock h3{color:#fff;font-size:16px;font-weight:600;margin-bottom:6px;margin-top:12px}
-.admin-lock p{color:rgba(255,255,255,.55);font-size:13px;margin-bottom:16px}
-.admin-lock input{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--rsm);padding:11px 14px;width:100%;font-size:15px;outline:none;margin-bottom:10px}
-.admin-lock input::placeholder{color:rgba(255,255,255,.35)}
-.admin-lock input:focus{border-color:var(--accent)}
-.admin-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(232,160,32,.2);border:1px solid rgba(232,160,32,.4);color:var(--accent);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;margin-bottom:12px}
+.ib{background:#e8f0fe;border-radius:var(--rs);padding:12px 14px;font-size:13px;color:#1a3a5c;margin-bottom:14px;line-height:1.6}
+.ib strong{display:block;margin-bottom:4px;font-size:14px}
+.spl{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:var(--okb);color:var(--ok)}
+.ns{font-size:13px;color:var(--t2);margin-top:8px;text-align:center}
+.alk{background:rgba(10,26,42,.92);border-radius:var(--r);padding:28px 20px;text-align:center;margin-bottom:14px}
+.alk h3{color:#fff;font-size:16px;font-weight:600;margin-bottom:6px;margin-top:12px}
+.alk p{color:rgba(255,255,255,.55);font-size:13px;margin-bottom:16px}
+.alk input{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--rs);padding:11px 14px;width:100%;font-size:15px;outline:none;margin-bottom:10px}
+.alk input::placeholder{color:rgba(255,255,255,.35)}
+.alk input:focus{border-color:var(--a)}
+.abg{display:inline-flex;align-items:center;gap:6px;background:rgba(232,160,32,.2);border:1px solid rgba(232,160,32,.4);color:var(--a);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;margin-bottom:12px}
 input[type=file]{display:none}
 </style>
 </head>
 <body>
  
-<div id="screen-login" class="screen active">
-  <div class="login-logo">
+<div id="sl" class="screen active">
+  <div class="llogo">
     <svg viewBox="0 0 44 44" fill="none" width="44" height="44"><path d="M8 34L22 10L36 34H8Z" fill="white" opacity=".9"/><circle cx="22" cy="26" r="5" fill="#e8a020"/></svg>
   </div>
   <div class="lbox">
     <h2>PDV Neuquén</h2>
     <p>Materiales publicitarios en punto de venta</p>
-    <div class="field"><label>Tu nombre completo</label><input type="text" id="li-nombre" placeholder="Ej: Carlos Rodríguez" autocomplete="name"></div>
-    <div class="field"><label>Tu localidad base</label><select id="li-loc"><option value="">— Seleccioná —</option></select></div>
-    <button class="btn btn-primary" onclick="doLogin()">
+    <div class="fld"><label>Tu nombre completo</label><input type="text" id="ln" placeholder="Ej: Carlos Rodríguez" autocomplete="name"></div>
+    <div class="fld"><label>Tu localidad base</label><select id="ll"><option value="">— Seleccioná —</option></select></div>
+    <button class="btn bp" onclick="doLogin()">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
       Ingresar
     </button>
   </div>
 </div>
  
-<div id="screen-main" class="screen">
-  <div class="header">
+<div id="sm" class="screen">
+  <div class="hdr">
     <div class="hlogo">PDV</div>
-    <div class="htitle"><h1 id="hname">Vendedor</h1><p id="hloc">Localidad</p></div>
-    <div class="sdot" id="sdot" title="Estado de sincronización"></div>
+    <div class="htit"><h1 id="hn">Vendedor</h1><p id="hl">Localidad</p></div>
+    <div class="sdot" id="sd"></div>
   </div>
  
-  <!-- REGISTRO -->
-  <div id="tab-registro" class="content tab-c">
+  <div id="tr" class="cnt">
     <div class="card">
-      <div class="ctitle"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Punto de venta</div>
-      <div class="field"><label>Localidad del PDV</label><select id="pdv-loc"><option value="">— Seleccioná —</option></select></div>
-      <div class="field"><label>Dirección del PDV</label><input type="text" id="pdv-dir" placeholder="Ej: Av. Argentina 1200, local 3"></div>
+      <div class="ctit"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Punto de venta</div>
+      <div class="fld"><label>Localidad del PDV</label><select id="pl"><option value="">— Seleccioná —</option></select></div>
+      <div class="fld"><label>Dirección del PDV</label><input type="text" id="pd" placeholder="Ej: Av. Argentina 1200, local 3"></div>
     </div>
     <div class="card">
-      <div class="ctitle"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>Ubicación GPS</div>
+      <div class="ctit"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>Ubicación GPS</div>
       <div id="map"></div>
-      <div class="mstatus" id="mstatus"><div class="dot da"></div><span>Obteniendo ubicación…</span></div>
-      <button class="btn btn-outline btn-sm" onclick="refreshGPS()" style="margin-top:10px">
+      <div class="mst" id="ms"><div class="dot da"></div><span>Obteniendo ubicación…</span></div>
+      <button class="btn bo bsm" onclick="refreshGPS()" style="margin-top:10px">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>
         Actualizar GPS
       </button>
     </div>
     <div class="card">
-      <div class="ctitle"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Fotos de materiales publicitarios</div>
-      <div class="camera-zone" onclick="openCam()">
-        <div class="cam-ph" id="camph">
+      <div class="ctit"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Fotos de materiales publicitarios</div>
+      <div class="czn" onclick="openCam()">
+        <div class="cph" id="cph">
           <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
           <span>Tocá para fotografiar</span>
           <span style="font-size:11px;opacity:.7">Afiches · carteles · exhibidores · máx. 3 fotos</span>
         </div>
-        <div class="photo-badge" id="pbadge" style="display:none">0 fotos</div>
+        <div class="pbdg" id="pb" style="display:none">0 fotos</div>
       </div>
-      <input type="file" id="cam-input" accept="image/*" capture="environment" multiple onchange="handlePhotos(event)">
-      <div class="thumbs" id="thumbs"></div>
-      <button class="btn btn-accent" onclick="openCam()" style="margin-top:12px">
+      <input type="file" id="ci" accept="image/*" capture="environment" multiple onchange="handlePhotos(event)">
+      <div class="thbs" id="th"></div>
+      <button class="btn ba" onclick="openCam()" style="margin-top:12px">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
         Agregar foto
       </button>
     </div>
-    <button class="btn btn-primary" id="btn-save" onclick="saveRecord()" style="margin-bottom:24px">
+    <button class="btn bp" id="bs" onclick="saveRecord()" style="margin-bottom:24px">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
       Guardar y subir a la nube
     </button>
   </div>
  
-  <!-- HISTORIAL -->
-  <div id="tab-historial" class="content tab-c" style="display:none">
-    <div class="sgrid">
-      <div class="scard"><div class="num" id="s-hoy">—</div><div class="lbl">Fotos hoy</div></div>
-      <div class="scard"><div class="num" id="s-sem">—</div><div class="lbl">Esta semana</div></div>
+  <div id="th2" class="cnt" style="display:none">
+    <div class="sg">
+      <div class="sc"><div class="n" id="sh">—</div><div class="l">Fotos hoy</div></div>
+      <div class="sc"><div class="n" id="ss">—</div><div class="l">Esta semana</div></div>
     </div>
     <div class="card">
-      <div class="ctitle"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Mapa de mis visitas</div>
-      <div id="map-h"></div>
+      <div class="ctit"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Mapa de mis visitas</div>
+      <div id="mh"></div>
     </div>
-    <div id="rec-list"></div>
+    <div id="rl"></div>
   </div>
  
-  <!-- ADMIN -->
-  <div id="tab-admin" class="content tab-c" style="display:none">
-    <div id="admin-lock" class="admin-lock">
+  <div id="ta" class="cnt" style="display:none">
+    <div id="alk" class="alk">
       <svg width="40" height="40" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
       <h3>Área de administración</h3>
       <p>Solo para el administrador del sistema</p>
-      <input type="password" id="admin-pass" placeholder="Clave de administrador" onkeydown="if(event.key==='Enter')checkAdminPass()">
-      <button class="btn btn-accent" onclick="checkAdminPass()">Ingresar</button>
+      <input type="password" id="ap" placeholder="Clave de administrador" onkeydown="if(event.key==='Enter')checkPass()">
+      <button class="btn ba" onclick="checkPass()">Ingresar</button>
     </div>
-    <div id="admin-panel" style="display:none">
+    <div id="apn" style="display:none">
       <div style="text-align:center;margin-bottom:14px">
-        <div class="admin-badge"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Modo administrador</div>
+        <div class="abg"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Modo administrador</div>
       </div>
- 
       <div class="card">
-        <div class="ctitle"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Resumen semanal — todos los vendedores</div>
-        <div class="sgrid" style="margin-bottom:8px">
-          <div class="scard"><div class="num" id="ag-visitas">—</div><div class="lbl">Visitas</div></div>
-          <div class="scard"><div class="num" id="ag-fotos">—</div><div class="lbl">Fotos</div></div>
+        <div class="ctit"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Resumen semanal — todos los vendedores</div>
+        <div class="sg" style="margin-bottom:8px">
+          <div class="sc"><div class="n" id="av">—</div><div class="l">Visitas</div></div>
+          <div class="sc"><div class="n" id="af">—</div><div class="l">Fotos</div></div>
         </div>
-        <div class="scard" style="margin-bottom:8px"><div class="num" id="ag-vend">—</div><div class="lbl">Vendedores activos</div></div>
-        <button class="btn btn-outline btn-sm" onclick="loadGlobalStats()">
+        <div class="sc" style="margin-bottom:8px"><div class="n" id="ave">—</div><div class="l">Vendedores activos</div></div>
+        <button class="btn bo bsm" onclick="loadStats()">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>
           Actualizar
         </button>
       </div>
- 
       <div class="card">
-        <div class="ctitle"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Mapa global — todos los vendedores</div>
-        <div id="map-admin"></div>
-        <button class="btn btn-outline btn-sm" onclick="loadGlobalMap()" style="margin-top:10px">Recargar mapa</button>
+        <div class="ctit"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Mapa global — todos los vendedores</div>
+        <div id="ma"></div>
+        <button class="btn bo bsm" onclick="loadMap()" style="margin-top:10px">Recargar mapa</button>
       </div>
- 
       <div class="card">
-        <div class="ctitle"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Envío automático semanal</div>
-        <div class="info-box">
+        <div class="ctit"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Envío automático semanal</div>
+        <div class="ib">
           <strong>📅 Sábados a las 13:00 hs (Argentina)</strong>
-          Lee todos los registros de Firebase y consolida <strong>todos los vendedores</strong> en un solo email.<br>
-          Destinatario: <strong>juan@tabacaleraespert.com</strong>
+          Consolida <strong>todos los vendedores</strong> desde Firebase.<br>
+          Destinatario: <strong>juan@tabacaleraespert.com</strong><br>
+          Después del envío exitoso, los registros se borran de Firebase automáticamente.
         </div>
-        <div style="text-align:center;margin-bottom:8px"><span class="status-pill">✓ Firebase + EmailJS activos</span></div>
-        <div class="next-send" id="next-send"></div>
-        <button class="btn btn-outline" onclick="sendWeeklyNow()" style="margin-top:12px" id="btn-send-now">
+        <div style="text-align:center;margin-bottom:8px"><span class="spl">✓ Firebase + EmailJS activos</span></div>
+        <div class="ns" id="ns"></div>
+        <button class="btn bo" onclick="sendNow()" style="margin-top:12px" id="bsn">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           Enviar reporte ahora
         </button>
-        <button class="btn btn-outline" onclick="exportExcel()" style="margin-top:8px" id="btn-excel">
+        <button class="btn bo" onclick="doExcel()" style="margin-top:8px" id="bex">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Descargar Excel semanal
         </button>
-        <button class="btn btn-outline" onclick="testEmail()" style="margin-top:8px" id="btn-test">
+        <button class="btn bo" onclick="doTest()" style="margin-top:8px" id="bte">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           Enviar email de prueba
         </button>
       </div>
- 
-      <button class="btn btn-outline" onclick="lockAdmin()" style="margin-bottom:24px">
+      <button class="btn bo" onclick="lockAdmin()" style="margin-bottom:24px">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
         Cerrar sesión admin
       </button>
     </div>
   </div>
  
-  <nav class="nav-tabs">
-    <button class="nav-tab active" id="nb-registro" onclick="goToTab('registro')">
+  <nav class="nav">
+    <button class="ntb active" id="nb0" onclick="goTab(0)">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
       Registrar
     </button>
-    <button class="nav-tab" id="nb-historial" onclick="goToTab('historial')">
+    <button class="ntb" id="nb1" onclick="goTab(1)">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
       Historial
     </button>
-    <button class="nav-tab" id="nb-admin" onclick="goToTab('admin')">
+    <button class="ntb" id="nb2" onclick="goTab(2)">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       Admin
     </button>
   </nav>
 </div>
  
-<div class="toast-c" id="toast-c"></div>
+<div class="tc" id="tc"></div>
  
 <script>
 // ── FIREBASE ──
 firebase.initializeApp({
-  apiKey:"AIzaSyCWntXQQIr-7653p3fcKin9M3Iuwex9Oy0",
-  authDomain:"pdv-neuquen.firebaseapp.com",
-  projectId:"pdv-neuquen",
-  storageBucket:"pdv-neuquen.firebasestorage.app",
-  messagingSenderId:"257970485262",
-  appId:"1:257970485262:web:f130546bef6aa016b1645f"
+  apiKey: "AIzaSyCWntXQQIr-7653p3fcKin9M3Iuwex9Oy0",
+  authDomain: "pdv-neuquen.firebaseapp.com",
+  projectId: "pdv-neuquen",
+  storageBucket: "pdv-neuquen.firebasestorage.app",
+  messagingSenderId: "257970485262",
+  appId: "1:257970485262:web:f130546bef6aa016b1645f"
 });
-const db = firebase.firestore();
+var db = firebase.firestore();
  
 // ── EMAILJS ──
 emailjs.init('IwB1E7Oge7B_cdN6r');
-const SVC='service_bka7qpm', TPL='template_2gxm8t9';
+var SVC = 'service_bka7qpm';
+var TPL = 'template_2gxm8t9';
+var DEST = 'juan@tabacaleraespert.com';
  
-// ── ADMIN ──
-const ADMIN_PASS='lamperti';
-function checkAdminPass(){
-  if(document.getElementById('admin-pass').value===ADMIN_PASS){
-    document.getElementById('admin-lock').style.display='none';
-    document.getElementById('admin-panel').style.display='block';
-    document.getElementById('admin-pass').value='';
-    loadGlobalStats(); loadGlobalMap(); updateNextSend(); cleanupExpired();
-  } else { toast('Clave incorrecta','err'); document.getElementById('admin-pass').value=''; }
-}
-function lockAdmin(){ document.getElementById('admin-lock').style.display='block'; document.getElementById('admin-panel').style.display='none'; goToTab('registro'); }
+// ── CONSTANTES ──
+var ADMIN = 'lamperti';
+var MAX_F = 3;
+var LOCS = ["Neuquén Capital","Plottier","Centenario","Zapala","San Martín de los Andes","Cutral Co","Plaza Huincul","Rincón de los Sauces","Chos Malal","Junín de los Andes","San Patricio del Chañar","Añelo (Capital de Vaca Muerta)","Villa La Angostura","Aluminé","Piedra del Águila","Loncopué","Andacollo","Las Lajas","Las Ovejas","Villa Pehuenia - Moquehue","Villa El Chocón","Vista Alegre","Mariano Moreno","Picún Leufú","Buta Ranquil"];
  
-// ── LOCALIDADES ──
-const LOCS=["Neuquén Capital","Plottier","Centenario","Zapala","San Martín de los Andes","Cutral Co","Plaza Huincul","Rincón de los Sauces","Chos Malal","Junín de los Andes","San Patricio del Chañar","Añelo (Capital de Vaca Muerta)","Villa La Angostura","Aluminé","Piedra del Águila","Loncopué","Andacollo","Las Lajas","Las Ovejas","Villa Pehuenia - Moquehue","Villa El Chocón","Vista Alegre","Mariano Moreno","Picún Leufú","Buta Ranquil"];
-['li-loc','pdv-loc'].forEach(id=>{ const s=document.getElementById(id); LOCS.forEach(l=>{ const o=document.createElement('option'); o.textContent=l; s.appendChild(o); }); });
+// ── POBLAR SELECTS ──
+['ll','pl'].forEach(function(id) {
+  var s = document.getElementById(id);
+  LOCS.forEach(function(l) {
+    var o = document.createElement('option');
+    o.textContent = l;
+    s.appendChild(o);
+  });
+});
  
 // ── STATE ──
-const ST={vendedor:'',localidad:'',gps:null,photos:[],myRecs:[],map:null,mapH:null,mapA:null,gpsM:null,timer:null};
+var ST = {
+  vend: '', loc: '', gps: null, photos: [],
+  myRecs: [], map: null, mapH: null, mapA: null,
+  gpsM: null, timer: null
+};
  
 // ── UTILS ──
-function toast(msg,type=''){
-  const c=document.getElementById('toast-c'),t=document.createElement('div');
-  t.className=`toast ${type}`;
-  const ic={ok:'<polyline points="20 6 9 17 4 12"/>',err:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',warn:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>'};
-  t.innerHTML=`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${ic[type]||ic.warn}</svg>${msg}`;
-  c.appendChild(t); requestAnimationFrame(()=>t.classList.add('show'));
-  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); },4000);
+function toast(msg, type) {
+  type = type || '';
+  var c = document.getElementById('tc');
+  var t = document.createElement('div');
+  t.className = 'tst ' + type;
+  var ic = {
+    ok: '<polyline points="20 6 9 17 4 12"/>',
+    er: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+    wn: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>'
+  };
+  t.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">' + (ic[type] || ic.wn) + '</svg>' + msg;
+  c.appendChild(t);
+  requestAnimationFrame(function() { t.classList.add('show'); });
+  setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 4000);
 }
-function arNow(){ return new Date(new Date().toLocaleString('en-US',{timeZone:'America/Argentina/Buenos_Aires'})); }
-function fmtD(ts){ return new Date(ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}); }
-function fmtT(ts){ return new Date(ts).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); }
-function fmtDT(ts){ return `${fmtD(ts)} ${fmtT(ts)}`; }
-function sd(state){ const d=document.getElementById('sdot'); d.className='sdot'+(state==='ok'?' ok':state==='sync'?' sync':''); }
+ 
+function arNow() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+}
+ 
+function fmtD(ts) {
+  return new Date(ts).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+ 
+function fmtT(ts) {
+  return new Date(ts).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+ 
+function fmtDT(ts) { return fmtD(ts) + ' ' + fmtT(ts); }
+ 
+function setDot(state) {
+  var d = document.getElementById('sd');
+  d.className = 'sdot' + (state === 'ok' ? ' ok' : state === 'sync' ? ' sync' : '');
+}
  
 // ── LOGIN ──
-function doLogin(){
-  const n=document.getElementById('li-nombre').value.trim(), l=document.getElementById('li-loc').value;
-  if(!n){ toast('Ingresá tu nombre','err'); return; }
-  if(!l){ toast('Seleccioná tu localidad','err'); return; }
-  ST.vendedor=n; ST.localidad=l;
-  localStorage.setItem('pdv_sess',JSON.stringify({v:n,l}));
-  document.getElementById('hname').textContent=n;
-  document.getElementById('hloc').textContent=l;
-  document.getElementById('screen-login').classList.remove('active');
-  document.getElementById('screen-main').classList.add('active');
+function doLogin() {
+  var n = document.getElementById('ln').value.trim();
+  var l = document.getElementById('ll').value;
+  if (!n) { toast('Ingresá tu nombre', 'er'); return; }
+  if (!l) { toast('Seleccioná tu localidad', 'er'); return; }
+  ST.vend = n; ST.loc = l;
+  localStorage.setItem('pdv_sess', JSON.stringify({ v: n, l: l }));
+  document.getElementById('hn').textContent = n;
+  document.getElementById('hl').textContent = l;
+  document.getElementById('sl').classList.remove('active');
+  document.getElementById('sm').classList.add('active');
   initMap(); startGPS(); scheduleWeekly(); loadMyRecs();
 }
  
 // ── TABS ──
-function goToTab(t){
-  ['registro','historial','admin'].forEach(x=>{ document.getElementById(`tab-${x}`).style.display=x===t?'block':'none'; document.getElementById(`nb-${x}`).classList.toggle('active',x===t); });
-  if(t==='historial'){ renderRecs(); renderMapH(); updateStats(); }
-  if(t==='admin') updateNextSend();
+var TABS = ['tr', 'th2', 'ta'];
+var NBS = ['nb0', 'nb1', 'nb2'];
+function goTab(i) {
+  TABS.forEach(function(id, j) {
+    document.getElementById(id).style.display = j === i ? 'block' : 'none';
+    document.getElementById(NBS[j]).classList.toggle('active', j === i);
+  });
+  if (i === 1) { renderRecs(); renderMapH(); updateStats(); }
+  if (i === 2) { updateNextSend(); }
+}
+ 
+// ── ADMIN ──
+function checkPass() {
+  if (document.getElementById('ap').value === ADMIN) {
+    document.getElementById('alk').style.display = 'none';
+    document.getElementById('apn').style.display = 'block';
+    document.getElementById('ap').value = '';
+    loadStats(); loadMap(); updateNextSend(); cleanExpired();
+  } else {
+    toast('Clave incorrecta', 'er');
+    document.getElementById('ap').value = '';
+  }
+}
+function lockAdmin() {
+  document.getElementById('alk').style.display = 'block';
+  document.getElementById('apn').style.display = 'none';
+  goTab(0);
 }
  
 // ── MAP ──
-function initMap(){ ST.map=L.map('map',{zoomControl:false,attributionControl:false}).setView([-38.95,-68.06],12); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(ST.map); }
-function startGPS(){ if(!navigator.geolocation){ setMS('dr','GPS no disponible'); return; } navigator.geolocation.getCurrentPosition(posOK,posErr,{enableHighAccuracy:true,timeout:15000}); }
-function refreshGPS(){ setMS('da','Actualizando…'); navigator.geolocation.getCurrentPosition(posOK,posErr,{enableHighAccuracy:true,timeout:15000}); }
-function setMS(dot,msg){ document.getElementById('mstatus').innerHTML=`<div class="dot ${dot}"></div><span>${msg}</span>`; }
-function posOK(p){ ST.gps={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}; ST.map.setView([ST.gps.lat,ST.gps.lng],15); if(ST.gpsM)ST.gpsM.remove(); ST.gpsM=L.circleMarker([ST.gps.lat,ST.gps.lng],{radius:8,color:'#1a3a5c',fillColor:'#2563a8',fillOpacity:1,weight:2}).addTo(ST.map).bindPopup(`Tu ubicación · ${ST.gps.acc}m`); setMS('dg',`Ubicación obtenida · precisión ${ST.gps.acc}m`); }
-function posErr(){ setMS('dr','Error GPS: habilitá el permiso de ubicación'); }
+function initMap() {
+  ST.map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-38.95, -68.06], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(ST.map);
+}
+function startGPS() {
+  if (!navigator.geolocation) { setMS('dr', 'GPS no disponible'); return; }
+  navigator.geolocation.getCurrentPosition(posOK, posErr, { enableHighAccuracy: true, timeout: 15000 });
+}
+function refreshGPS() {
+  setMS('da', 'Actualizando…');
+  navigator.geolocation.getCurrentPosition(posOK, posErr, { enableHighAccuracy: true, timeout: 15000 });
+}
+function setMS(dot, msg) {
+  document.getElementById('ms').innerHTML = '<div class="dot ' + dot + '"></div><span>' + msg + '</span>';
+}
+function posOK(p) {
+  ST.gps = { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy) };
+  ST.map.setView([ST.gps.lat, ST.gps.lng], 15);
+  if (ST.gpsM) ST.gpsM.remove();
+  ST.gpsM = L.circleMarker([ST.gps.lat, ST.gps.lng], { radius: 8, color: '#1a3a5c', fillColor: '#2563a8', fillOpacity: 1, weight: 2 })
+    .addTo(ST.map).bindPopup('Tu ubicación · ' + ST.gps.acc + 'm');
+  setMS('dg', 'Ubicación obtenida · precisión ' + ST.gps.acc + 'm');
+}
+function posErr() { setMS('dr', 'Error GPS: habilitá el permiso de ubicación'); }
  
 // ── CAMERA ──
-function openCam(){ document.getElementById('cam-input').click(); }
-const MAX_PHOTOS=3;
-function handlePhotos(evt){
-  const rem=MAX_PHOTOS-ST.photos.length;
-  if(rem<=0){ toast(`Máximo ${MAX_PHOTOS} fotos por visita`,'warn'); evt.target.value=''; return; }
-  const files=Array.from(evt.target.files).slice(0,rem);
-  if(evt.target.files.length>rem) toast(`Solo se agregaron ${rem} foto${rem>1?'s':''} (máximo ${MAX_PHOTOS})`, 'warn');
-  files.forEach(f=>{ const r=new FileReader(); r.onload=e=>compressPhoto(e.target.result,url=>{ ST.photos.push({url,ts:Date.now()}); renderThumbs(); }); r.readAsDataURL(f); });
-  evt.target.value='';
+function openCam() { document.getElementById('ci').click(); }
+function handlePhotos(evt) {
+  var rem = MAX_F - ST.photos.length;
+  if (rem <= 0) { toast('Máximo ' + MAX_F + ' fotos por visita', 'wn'); evt.target.value = ''; return; }
+  var files = Array.from(evt.target.files).slice(0, rem);
+  if (evt.target.files.length > rem) toast('Solo se agregaron ' + rem + ' foto' + (rem > 1 ? 's' : '') + ' (máximo ' + MAX_F + ')', 'wn');
+  files.forEach(function(f) {
+    var r = new FileReader();
+    r.onload = function(e) { compressPhoto(e.target.result, function(url) { ST.photos.push({ url: url, ts: Date.now() }); renderThumbs(); }); };
+    r.readAsDataURL(f);
+  });
+  evt.target.value = '';
 }
-function compressPhoto(src,cb){
-  const img=new Image();
-  img.onload=()=>{
-    const MAX_PX=600, MAX_BYTES=140000;
-    const ratio=Math.min(MAX_PX/img.width,MAX_PX/img.height,1);
-    const c=document.createElement('canvas');
-    c.width=Math.round(img.width*ratio); c.height=Math.round(img.height*ratio);
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    let q=0.65, url=c.toDataURL('image/jpeg',q);
-    while(url.length*0.75>MAX_BYTES&&q>0.2){ q-=0.08; url=c.toDataURL('image/jpeg',q); }
+function compressPhoto(src, cb) {
+  var img = new Image();
+  img.onload = function() {
+    var MAX_PX = 600, MAX_BYTES = 140000;
+    var ratio = Math.min(MAX_PX / img.width, MAX_PX / img.height, 1);
+    var c = document.createElement('canvas');
+    c.width = Math.round(img.width * ratio);
+    c.height = Math.round(img.height * ratio);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    var q = 0.65;
+    var url = c.toDataURL('image/jpeg', q);
+    while (url.length * 0.75 > MAX_BYTES && q > 0.2) { q -= 0.08; url = c.toDataURL('image/jpeg', q); }
     cb(url);
   };
-  img.src=src;
+  img.src = src;
 }
-function renderThumbs(){
-  const b=document.getElementById('pbadge'),ph=document.getElementById('camph'),tc=document.getElementById('thumbs');
-  tc.innerHTML='';
-  if(!ST.photos.length){ b.style.display='none'; ph.style.display='flex'; return; }
-  b.style.display='block'; b.textContent=`${ST.photos.length} foto${ST.photos.length>1?'s':''}`;
-  ph.style.display='none';
-  ST.photos.forEach((p,i)=>{ const w=document.createElement('div'); w.className='tw'; w.innerHTML=`<img src="${p.url}"><button class="tdel" onclick="delPhoto(${i})">×</button>`; tc.appendChild(w); });
+function renderThumbs() {
+  var b = document.getElementById('pb'), ph = document.getElementById('cph'), tc = document.getElementById('th');
+  tc.innerHTML = '';
+  if (!ST.photos.length) { b.style.display = 'none'; ph.style.display = 'flex'; return; }
+  b.style.display = 'block';
+  b.textContent = ST.photos.length + ' foto' + (ST.photos.length > 1 ? 's' : '');
+  ph.style.display = 'none';
+  ST.photos.forEach(function(p, i) {
+    var w = document.createElement('div'); w.className = 'tw';
+    w.innerHTML = '<img src="' + p.url + '"><button class="tdel" onclick="delPhoto(' + i + ')">×</button>';
+    tc.appendChild(w);
+  });
 }
-function delPhoto(i){ ST.photos.splice(i,1); renderThumbs(); }
+function delPhoto(i) { ST.photos.splice(i, 1); renderThumbs(); }
  
 // ── SAVE → FIRESTORE ──
-async function saveRecord(){
-  const loc=document.getElementById('pdv-loc').value, dir=document.getElementById('pdv-dir').value.trim();
-  if(!loc){ toast('Seleccioná la localidad del PDV','err'); return; }
-  if(!dir){ toast('Ingresá la dirección del PDV','err'); return; }
-  if(!ST.photos.length){ toast('Sacá al menos una foto','err'); return; }
-  const btn=document.getElementById('btn-save');
-  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Subiendo a la nube…'; sd('sync');
-  const rec={ vendedor:ST.vendedor, locVend:ST.localidad, locPDV:loc, dir, gps:ST.gps?{lat:ST.gps.lat,lng:ST.gps.lng,acc:ST.gps.acc}:null, photos:ST.photos.map(p=>p.url), cantFotos:ST.photos.length, ts:Date.now(), fecha:fmtD(Date.now()), hora:fmtT(Date.now()) };
-  try {
-    await db.collection('visitas').add(rec);
-    ST.myRecs.unshift(rec); ST.photos=[]; renderThumbs();
-    document.getElementById('pdv-loc').value=''; document.getElementById('pdv-dir').value='';
-    sd('ok'); toast(`✓ Subido a la nube · ${rec.cantFotos} foto${rec.cantFotos>1?'s':''}`, 'ok');
-    if(rec.gps&&ST.map) L.marker([rec.gps.lat,rec.gps.lng]).addTo(ST.map).bindPopup(`${dir}, ${loc}`);
-  } catch(e){ sd(''); toast('Sin conexión. Verificá internet e intentá de nuevo.','err'); console.error(e); }
-  btn.disabled=false; btn.innerHTML=`<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar y subir a la nube`;
+function saveRecord() {
+  var loc = document.getElementById('pl').value;
+  var dir = document.getElementById('pd').value.trim();
+  if (!loc) { toast('Seleccioná la localidad del PDV', 'er'); return; }
+  if (!dir) { toast('Ingresá la dirección del PDV', 'er'); return; }
+  if (!ST.photos.length) { toast('Sacá al menos una foto', 'er'); return; }
+  var btn = document.getElementById('bs');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="sp"></div> Subiendo a la nube…';
+  setDot('sync');
+  var rec = {
+    vendedor: ST.vend, locVend: ST.loc, locPDV: loc, dir: dir,
+    gps: ST.gps ? { lat: ST.gps.lat, lng: ST.gps.lng, acc: ST.gps.acc } : null,
+    photos: ST.photos.map(function(p) { return p.url; }),
+    cantFotos: ST.photos.length,
+    ts: Date.now(), fecha: fmtD(Date.now()), hora: fmtT(Date.now())
+  };
+  db.collection('visitas').add(rec).then(function() {
+    ST.myRecs.unshift(rec);
+    ST.photos = []; renderThumbs();
+    document.getElementById('pl').value = '';
+    document.getElementById('pd').value = '';
+    setDot('ok');
+    toast('✓ Subido a la nube · ' + rec.cantFotos + ' foto' + (rec.cantFotos > 1 ? 's' : ''), 'ok');
+    if (rec.gps && ST.map) L.marker([rec.gps.lat, rec.gps.lng]).addTo(ST.map).bindPopup(dir + ', ' + loc);
+  }).catch(function(e) {
+    setDot('');
+    toast('Sin conexión. Verificá internet e intentá de nuevo.', 'er');
+    console.error(e);
+  }).finally(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar y subir a la nube';
+  });
 }
  
 // ── LOAD MY RECORDS ──
-async function loadMyRecs(){
-  try {
-    const snap=await db.collection('visitas').where('vendedor','==',ST.vendedor).orderBy('ts','desc').limit(60).get();
-    ST.myRecs=snap.docs.map(d=>d.data()); sd('ok');
-  } catch(e){ sd(''); }
+function loadMyRecs() {
+  db.collection('visitas').where('vendedor', '==', ST.vend).orderBy('ts', 'desc').limit(60).get().then(function(snap) {
+    ST.myRecs = snap.docs.map(function(d) { return d.data(); });
+    setDot('ok');
+  }).catch(function() { setDot(''); });
 }
  
 // ── HISTORIAL ──
-function updateStats(){
-  const now=arNow(),tod=now.toDateString(),wa=new Date(now); wa.setDate(wa.getDate()-7);
-  let h=0,s=0;
-  ST.myRecs.forEach(r=>{ const d=new Date(r.ts); if(d.toDateString()===tod)h+=r.cantFotos; if(d>=wa)s+=r.cantFotos; });
-  document.getElementById('s-hoy').textContent=h;
-  document.getElementById('s-sem').textContent=s;
+function updateStats() {
+  var now = arNow(), tod = now.toDateString();
+  var wa = new Date(now); wa.setDate(wa.getDate() - 7);
+  var h = 0, s = 0;
+  ST.myRecs.forEach(function(r) {
+    var d = new Date(r.ts);
+    if (d.toDateString() === tod) h += r.cantFotos;
+    if (d >= wa) s += r.cantFotos;
+  });
+  document.getElementById('sh').textContent = h;
+  document.getElementById('ss').textContent = s;
 }
-function renderRecs(){
-  const c=document.getElementById('rec-list');
-  if(!ST.myRecs.length){ c.innerHTML=`<div class="empty"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><h3>Sin registros</h3><p>Tus visitas aparecerán aquí</p></div>`; return; }
-  c.innerHTML=ST.myRecs.map(r=>`<div class="rec-item">${r.photos&&r.photos[0]?`<img class="rthumb" src="${r.photos[0]}">`:`<div class="rthumb"></div>`}<div class="rinfo"><h3>${r.dir}</h3><p>${r.locPDV}</p><p>${fmtDT(r.ts)}</p><span class="badge">${r.cantFotos} foto${r.cantFotos>1?'s':''}</span>${r.gps?`<span style="font-size:11px;color:var(--text2);margin-left:6px">📍 GPS</span>`:''}</div></div>`).join('');
+function renderRecs() {
+  var c = document.getElementById('rl');
+  if (!ST.myRecs.length) {
+    c.innerHTML = '<div class="emp"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><h3>Sin registros</h3><p>Tus visitas aparecerán aquí</p></div>';
+    return;
+  }
+  c.innerHTML = ST.myRecs.map(function(r) {
+    return '<div class="ri">' +
+      (r.photos && r.photos[0] ? '<img class="rth" src="' + r.photos[0] + '">' : '<div class="rth"></div>') +
+      '<div class="rin"><h3>' + r.dir + '</h3><p>' + r.locPDV + '</p><p>' + fmtDT(r.ts) + '</p>' +
+      '<span class="bdg">' + r.cantFotos + ' foto' + (r.cantFotos > 1 ? 's' : '') + '</span>' +
+      (r.gps ? '<span style="font-size:11px;color:var(--t2);margin-left:6px">📍 GPS</span>' : '') +
+      '</div></div>';
+  }).join('');
 }
-function renderMapH(){
-  if(!ST.mapH){ ST.mapH=L.map('map-h',{zoomControl:false,attributionControl:false}).setView([-38.95,-68.06],8); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(ST.mapH); }
-  else ST.mapH.eachLayer(l=>{ if(l instanceof L.CircleMarker)l.remove(); });
-  const wg=ST.myRecs.filter(r=>r.gps); if(!wg.length)return;
-  const bounds=[];
-  wg.forEach(r=>{ bounds.push([r.gps.lat,r.gps.lng]); L.circleMarker([r.gps.lat,r.gps.lng],{radius:7,color:'#1a3a5c',fillColor:'#e8a020',fillOpacity:.9,weight:2}).addTo(ST.mapH).bindPopup(`<strong>${r.dir}</strong><br>${r.locPDV}<br>${fmtD(r.ts)}`); });
-  if(bounds.length) ST.mapH.fitBounds(bounds,{padding:[20,20]});
+function renderMapH() {
+  if (!ST.mapH) {
+    ST.mapH = L.map('mh', { zoomControl: false, attributionControl: false }).setView([-38.95, -68.06], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(ST.mapH);
+  } else {
+    ST.mapH.eachLayer(function(l) { if (l instanceof L.CircleMarker) l.remove(); });
+  }
+  var wg = ST.myRecs.filter(function(r) { return r.gps; });
+  if (!wg.length) return;
+  var bounds = [];
+  wg.forEach(function(r) {
+    bounds.push([r.gps.lat, r.gps.lng]);
+    L.circleMarker([r.gps.lat, r.gps.lng], { radius: 7, color: '#1a3a5c', fillColor: '#e8a020', fillOpacity: .9, weight: 2 })
+      .addTo(ST.mapH).bindPopup('<strong>' + r.dir + '</strong><br>' + r.locPDV + '<br>' + fmtD(r.ts));
+  });
+  if (bounds.length) ST.mapH.fitBounds(bounds, { padding: [20, 20] });
 }
  
 // ── ADMIN STATS ──
-async function loadGlobalStats(){
-  try {
-    const now=arNow(),wa=new Date(now); wa.setDate(wa.getDate()-7);
-    const snap=await db.collection('visitas').where('ts','>=',wa.getTime()).get();
-    const recs=snap.docs.map(d=>d.data());
-    document.getElementById('ag-visitas').textContent=recs.length;
-    document.getElementById('ag-fotos').textContent=recs.reduce((s,r)=>s+r.cantFotos,0);
-    document.getElementById('ag-vend').textContent=new Set(recs.map(r=>r.vendedor)).size;
-  } catch(e){ toast('Error al cargar stats','err'); }
+function loadStats() {
+  var now = arNow(), wa = new Date(now); wa.setDate(wa.getDate() - 7);
+  db.collection('visitas').where('ts', '>=', wa.getTime()).get().then(function(snap) {
+    var recs = snap.docs.map(function(d) { return d.data(); });
+    document.getElementById('av').textContent = recs.length;
+    document.getElementById('af').textContent = recs.reduce(function(s, r) { return s + r.cantFotos; }, 0);
+    document.getElementById('ave').textContent = new Set(recs.map(function(r) { return r.vendedor; })).size;
+  }).catch(function() { toast('Error al cargar stats', 'er'); });
 }
-async function loadGlobalMap(){
-  if(!ST.mapA){ ST.mapA=L.map('map-admin',{zoomControl:false,attributionControl:false}).setView([-38.95,-68.06],7); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(ST.mapA); }
-  else ST.mapA.eachLayer(l=>{ if(l instanceof L.CircleMarker)l.remove(); });
-  try {
-    const now=arNow(),wa=new Date(now); wa.setDate(wa.getDate()-7);
-    const snap=await db.collection('visitas').where('ts','>=',wa.getTime()).get();
-    const recs=snap.docs.map(d=>d.data()).filter(r=>r.gps);
-    const colors=['#e8a020','#2563a8','#1a7a4a','#c0392b','#7c3aed','#0891b2','#b45309'];
-    const vc={}; let ci=0;
-    const bounds=[];
-    recs.forEach(r=>{ if(!vc[r.vendedor])vc[r.vendedor]=colors[ci++%colors.length]; bounds.push([r.gps.lat,r.gps.lng]); L.circleMarker([r.gps.lat,r.gps.lng],{radius:8,color:'#fff',fillColor:vc[r.vendedor],fillOpacity:.9,weight:2}).addTo(ST.mapA).bindPopup(`<strong>${r.vendedor}</strong><br>${r.dir}<br>${r.locPDV}<br>${fmtD(r.ts)} · ${r.cantFotos} foto${r.cantFotos>1?'s':''}`); });
-    if(bounds.length) ST.mapA.fitBounds(bounds,{padding:[20,20]});
-    else toast('Sin registros GPS esta semana','warn');
-  } catch(e){ toast('Error al cargar mapa','err'); }
+function loadMap() {
+  if (!ST.mapA) {
+    ST.mapA = L.map('ma', { zoomControl: false, attributionControl: false }).setView([-38.95, -68.06], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(ST.mapA);
+  } else {
+    ST.mapA.eachLayer(function(l) { if (l instanceof L.CircleMarker) l.remove(); });
+  }
+  var now = arNow(), wa = new Date(now); wa.setDate(wa.getDate() - 7);
+  db.collection('visitas').where('ts', '>=', wa.getTime()).get().then(function(snap) {
+    var recs = snap.docs.map(function(d) { return d.data(); }).filter(function(r) { return r.gps; });
+    var colors = ['#e8a020', '#2563a8', '#1a7a4a', '#c0392b', '#7c3aed', '#0891b2', '#b45309'];
+    var vc = {}, ci = 0, bounds = [];
+    recs.forEach(function(r) {
+      if (!vc[r.vendedor]) vc[r.vendedor] = colors[ci++ % colors.length];
+      bounds.push([r.gps.lat, r.gps.lng]);
+      L.circleMarker([r.gps.lat, r.gps.lng], { radius: 8, color: '#fff', fillColor: vc[r.vendedor], fillOpacity: .9, weight: 2 })
+        .addTo(ST.mapA).bindPopup('<strong>' + r.vendedor + '</strong><br>' + r.dir + '<br>' + r.locPDV + '<br>' + fmtD(r.ts) + ' · ' + r.cantFotos + ' foto' + (r.cantFotos > 1 ? 's' : ''));
+    });
+    if (bounds.length) ST.mapA.fitBounds(bounds, { padding: [20, 20] });
+    else toast('Sin registros GPS esta semana', 'wn');
+  }).catch(function() { toast('Error al cargar mapa', 'er'); });
+}
+ 
+// ── CLEANUP ──
+function cleanupDocs(ids) {
+  if (!ids.length) return Promise.resolve();
+  var batch = db.batch();
+  ids.forEach(function(id) { batch.delete(db.collection('visitas').doc(id)); });
+  return batch.commit().then(function() {
+    console.log('[PDV] Limpieza: ' + ids.length + ' registros eliminados');
+  }).catch(function(e) { console.error('[PDV] Error limpieza:', e); });
+}
+function cleanExpired() {
+  var cutoff = arNow(); cutoff.setDate(cutoff.getDate() - 14);
+  db.collection('visitas').where('ts', '<', cutoff.getTime()).get().then(function(snap) {
+    if (!snap.empty) {
+      var ids = snap.docs.map(function(d) { return d.id; });
+      cleanupDocs(ids);
+    }
+  }).catch(function(e) { console.error('[PDV] Error cleanExpired:', e); });
 }
  
 // ── EXCEL ──
-async function exportExcel(){
-  const btn=document.getElementById('btn-excel');
-  btn.disabled=true; btn.innerHTML='<div class="spinner dark"></div> Generando…';
-  try {
-    const now=arNow(),wa=new Date(now); wa.setDate(wa.getDate()-7);
-    const snap=await db.collection('visitas').where('ts','>=',wa.getTime()).orderBy('ts','asc').get();
-    const recs=snap.docs.map(d=>d.data());
-    const det=[['Vendedor','Localidad vendedor','PDV Localidad','PDV Dirección','Fecha','Hora','Cant. fotos','Latitud','Longitud']];
-    recs.forEach(r=>det.push([r.vendedor,r.locVend,r.locPDV,r.dir,r.fecha,r.hora,r.cantFotos,r.gps?+r.gps.lat.toFixed(6):'',r.gps?+r.gps.lng.toFixed(6):'']));
-    const byV={};
-    recs.forEach(r=>{ if(!byV[r.vendedor])byV[r.vendedor]={visitas:0,fotos:0,loc:r.locVend}; byV[r.vendedor].visitas++; byV[r.vendedor].fotos+=r.cantFotos; });
-    const res=[['Vendedor','Localidad','Visitas','Fotos totales']];
-    Object.entries(byV).forEach(([v,d])=>res.push([v,d.loc,d.visitas,d.fotos]));
-    const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(det),'Detalle semanal');
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(res),'Resumen por vendedor');
-    XLSX.writeFile(wb,`PDV_Semanal_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`);
-    toast('Excel descargado','ok');
-  } catch(e){ toast('Error al generar Excel','err'); }
-  btn.disabled=false; btn.innerHTML=`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Descargar Excel semanal`;
+function doExcel() {
+  var btn = document.getElementById('bex');
+  btn.disabled = true; btn.innerHTML = '<div class="sp spd"></div> Generando…';
+  var now = arNow(), wa = new Date(now); wa.setDate(wa.getDate() - 7);
+  db.collection('visitas').where('ts', '>=', wa.getTime()).orderBy('ts', 'asc').get().then(function(snap) {
+    var recs = snap.docs.map(function(d) { return d.data(); });
+    var det = [['Vendedor', 'Localidad vendedor', 'PDV Localidad', 'PDV Dirección', 'Fecha', 'Hora', 'Cant. fotos', 'Latitud', 'Longitud']];
+    recs.forEach(function(r) {
+      det.push([r.vendedor, r.locVend, r.locPDV, r.dir, r.fecha, r.hora, r.cantFotos, r.gps ? +r.gps.lat.toFixed(6) : '', r.gps ? +r.gps.lng.toFixed(6) : '']);
+    });
+    var byV = {};
+    recs.forEach(function(r) {
+      if (!byV[r.vendedor]) byV[r.vendedor] = { visitas: 0, fotos: 0, loc: r.locVend };
+      byV[r.vendedor].visitas++; byV[r.vendedor].fotos += r.cantFotos;
+    });
+    var res = [['Vendedor', 'Localidad', 'Visitas', 'Fotos totales']];
+    Object.keys(byV).forEach(function(v) { res.push([v, byV[v].loc, byV[v].visitas, byV[v].fotos]); });
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(det), 'Detalle semanal');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(res), 'Resumen por vendedor');
+    var d = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+    XLSX.writeFile(wb, 'PDV_Semanal_' + d + '.xlsx');
+    toast('Excel descargado', 'ok');
+  }).catch(function() { toast('Error al generar Excel', 'er'); }).finally(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Descargar Excel semanal';
+  });
 }
  
 // ── EMAIL ──
-// ── CLEANUP: borra docs enviados o con más de 14 días ──
-async function cleanupFirestore(docIds){
-  try {
-    const batch=db.batch();
-    docIds.forEach(id=>batch.delete(db.collection('visitas').doc(id)));
-    await batch.commit();
-    console.log(`[PDV] Limpieza: ${docIds.length} registros eliminados de Firebase`);
-  } catch(e){ console.error('[PDV] Error en limpieza:', e); }
-}
-async function cleanupExpired(){
-  try {
-    const cutoff=arNow(); cutoff.setDate(cutoff.getDate()-14);
-    const snap=await db.collection('visitas').where('ts','<',cutoff.getTime()).get();
-    if(!snap.empty){ const ids=snap.docs.map(d=>d.id); await cleanupFirestore(ids); }
-  } catch(e){}
-}
- 
-async function buildEmail(){
-  const now=arNow(),wa=new Date(now); wa.setDate(wa.getDate()-7);
-  const snap=await db.collection('visitas').where('ts','>=',wa.getTime()).orderBy('ts','asc').get();
-async function buildEmail(){
-  const now=arNow(),wa=new Date(now); wa.setDate(wa.getDate()-7);
-  const snap=await db.collection('visitas').where('ts','>=',wa.getTime()).orderBy('ts','asc').get();
-  const docIds=snap.docs.map(d=>d.id);
-  const recs=snap.docs.map(d=>d.data());
-  if(!recs.length) return null;
-  const byV={};
-  recs.forEach(r=>{ if(!byV[r.vendedor])byV[r.vendedor]=[]; byV[r.vendedor].push(r); });
-  const tf=recs.reduce((s,r)=>s+r.cantFotos,0);
-  const semana=`${fmtD(wa.getTime())} al ${fmtD(now.getTime())}`;
-  let html=`<div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto"><div style="background:#1a3a5c;padding:20px 24px;border-radius:8px 8px 0 0"><h1 style="color:#fff;margin:0;font-size:20px">Reporte Semanal PDV Neuquén</h1><p style="color:rgba(255,255,255,.75);margin:4px 0 0;font-size:13px">Semana del ${semana}</p></div><div style="background:#f0f4f8;padding:16px 24px;display:flex;gap:12px"><div style="background:#fff;border-radius:8px;padding:12px;text-align:center;flex:1"><div style="font-size:26px;font-weight:700;color:#1a3a5c">${recs.length}</div><div style="font-size:12px;color:#5a7088">Visitas</div></div><div style="background:#fff;border-radius:8px;padding:12px;text-align:center;flex:1"><div style="font-size:26px;font-weight:700;color:#1a3a5c">${tf}</div><div style="font-size:12px;color:#5a7088">Fotos</div></div><div style="background:#fff;border-radius:8px;padding:12px;text-align:center;flex:1"><div style="font-size:26px;font-weight:700;color:#1a3a5c">${Object.keys(byV).length}</div><div style="font-size:12px;color:#5a7088">Vendedores</div></div></div>`;
-  Object.entries(byV).forEach(([v,rs])=>{
-    const tff=rs.reduce((s,r)=>s+r.cantFotos,0);
-    html+=`<div style="padding:16px 24px;background:#fff;border-top:2px solid #f0f4f8"><h2 style="color:#2563a8;margin:0 0 4px;font-size:16px">${v}</h2><p style="color:#5a7088;font-size:13px;margin:0 0 12px">${rs[0].locVend} · ${rs.length} visita${rs.length>1?'s':''} · ${tff} foto${tff>1?'s':''}</p><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#1a3a5c;color:#fff"><th style="padding:7px 10px;text-align:left">Dirección</th><th style="padding:7px 10px;text-align:left">Localidad PDV</th><th style="padding:7px 10px;text-align:left">Fecha</th><th style="padding:7px 10px;text-align:left">Hora</th><th style="padding:7px 10px;text-align:center">Fotos</th><th style="padding:7px 10px;text-align:left">GPS</th></tr></thead><tbody>`;
-    rs.forEach((r,i)=>{ html+=`<tr style="background:${i%2===0?'#fff':'#f7fafc'}"><td style="padding:6px 10px">${r.dir}</td><td style="padding:6px 10px">${r.locPDV}</td><td style="padding:6px 10px">${r.fecha}</td><td style="padding:6px 10px">${r.hora}</td><td style="padding:6px 10px;text-align:center"><strong>${r.cantFotos}</strong></td><td style="padding:6px 10px">${r.gps?`<a href="https://maps.google.com/?q=${r.gps.lat},${r.gps.lng}" style="color:#2563a8">Ver mapa</a>`:'—'}</td></tr>`; });
-    html+=`</tbody></table></div>`;
+function buildHtml(recs) {
+  var now = arNow(), wa = new Date(now); wa.setDate(wa.getDate() - 7);
+  var byV = {}, tf = 0;
+  recs.forEach(function(r) {
+    if (!byV[r.vendedor]) byV[r.vendedor] = [];
+    byV[r.vendedor].push(r);
+    tf += r.cantFotos;
   });
-  html+=`<div style="background:#1a3a5c;padding:14px 24px;border-radius:0 0 8px 8px;text-align:center"><p style="color:rgba(255,255,255,.6);font-size:12px;margin:0">PDV Neuquén · Reporte automático semanal · Tabacalera Espert</p></div></div>`;
-  return {html,total:recs.length,tf,vend:Object.keys(byV).length,semana,docIds};
+  var semana = fmtD(wa.getTime()) + ' al ' + fmtD(now.getTime());
+  var vkeys = Object.keys(byV);
+  var html = '<div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto">' +
+    '<div style="background:#1a3a5c;padding:20px 24px;border-radius:8px 8px 0 0">' +
+    '<h1 style="color:#fff;margin:0;font-size:20px">Reporte Semanal PDV Neuquén</h1>' +
+    '<p style="color:rgba(255,255,255,.75);margin:4px 0 0;font-size:13px">Semana del ' + semana + '</p></div>' +
+    '<div style="background:#f0f4f8;padding:16px 24px;display:flex;gap:12px">' +
+    '<div style="background:#fff;border-radius:8px;padding:12px;text-align:center;flex:1"><div style="font-size:26px;font-weight:700;color:#1a3a5c">' + recs.length + '</div><div style="font-size:12px;color:#5a7088">Visitas</div></div>' +
+    '<div style="background:#fff;border-radius:8px;padding:12px;text-align:center;flex:1"><div style="font-size:26px;font-weight:700;color:#1a3a5c">' + tf + '</div><div style="font-size:12px;color:#5a7088">Fotos</div></div>' +
+    '<div style="background:#fff;border-radius:8px;padding:12px;text-align:center;flex:1"><div style="font-size:26px;font-weight:700;color:#1a3a5c">' + vkeys.length + '</div><div style="font-size:12px;color:#5a7088">Vendedores</div></div></div>';
+  vkeys.forEach(function(v) {
+    var rs = byV[v];
+    var tff = rs.reduce(function(s, r) { return s + r.cantFotos; }, 0);
+    html += '<div style="padding:16px 24px;background:#fff;border-top:2px solid #f0f4f8">' +
+      '<h2 style="color:#2563a8;margin:0 0 4px;font-size:16px">' + v + '</h2>' +
+      '<p style="color:#5a7088;font-size:13px;margin:0 0 12px">' + rs[0].locVend + ' · ' + rs.length + ' visita' + (rs.length > 1 ? 's' : '') + ' · ' + tff + ' foto' + (tff > 1 ? 's' : '') + '</p>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#1a3a5c;color:#fff">' +
+      '<th style="padding:7px 10px;text-align:left">Dirección</th><th style="padding:7px 10px;text-align:left">Localidad PDV</th>' +
+      '<th style="padding:7px 10px;text-align:left">Fecha</th><th style="padding:7px 10px;text-align:left">Hora</th>' +
+      '<th style="padding:7px 10px;text-align:center">Fotos</th><th style="padding:7px 10px;text-align:left">GPS</th>' +
+      '</tr></thead><tbody>';
+    rs.forEach(function(r, i) {
+      var gps = r.gps ? '<a href="https://maps.google.com/?q=' + r.gps.lat + ',' + r.gps.lng + '" style="color:#2563a8">Ver mapa</a>' : '—';
+      html += '<tr style="background:' + (i % 2 === 0 ? '#fff' : '#f7fafc') + '">' +
+        '<td style="padding:6px 10px">' + r.dir + '</td><td style="padding:6px 10px">' + r.locPDV + '</td>' +
+        '<td style="padding:6px 10px">' + r.fecha + '</td><td style="padding:6px 10px">' + r.hora + '</td>' +
+        '<td style="padding:6px 10px;text-align:center"><strong>' + r.cantFotos + '</strong></td>' +
+        '<td style="padding:6px 10px">' + gps + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+  });
+  html += '<div style="background:#1a3a5c;padding:14px 24px;border-radius:0 0 8px 8px;text-align:center">' +
+    '<p style="color:rgba(255,255,255,.6);font-size:12px;margin:0">PDV Neuquén · Reporte automático semanal · Tabacalera Espert</p></div></div>';
+  return { html: html, semana: semana, total: recs.length, tf: tf, vend: vkeys.length };
 }
  
-async function sendWeeklyEmail(){
-  try {
-    const data=await buildEmail();
-    if(!data){ toast('Sin registros esta semana','warn'); await cleanupExpired(); return false; }
-    const res=await emailjs.send(SVC,TPL,{to_email:'juan@tabacaleraespert.com',subject:`Reporte Semanal PDV Neuquén — ${data.semana}`,message_html:data.html,total_visitas:data.total,total_fotos:data.tf,vendedores:data.vend,semana:data.semana,fecha_envio:fmtDT(Date.now())});
-    if(res.status===200){
-      toast('✓ Reporte semanal enviado — limpiando Firebase…','ok');
-      await cleanupFirestore(data.docIds);
-      await cleanupExpired();
-      return true;
-    }
-  } catch(e){ toast(`Error: ${e.text||e.message||'error'}`, 'err'); }
-  return false;
+function sendWeeklyEmail() {
+  var now = arNow(), wa = new Date(now); wa.setDate(wa.getDate() - 7);
+  return db.collection('visitas').where('ts', '>=', wa.getTime()).orderBy('ts', 'asc').get().then(function(snap) {
+    var docIds = snap.docs.map(function(d) { return d.id; });
+    var recs = snap.docs.map(function(d) { return d.data(); });
+    if (!recs.length) { toast('Sin registros esta semana', 'wn'); cleanExpired(); return false; }
+    var data = buildHtml(recs);
+    return emailjs.send(SVC, TPL, {
+      to_email: DEST,
+      subject: 'Reporte Semanal PDV Neuquén — ' + data.semana,
+      message_html: data.html,
+      total_visitas: data.total,
+      total_fotos: data.tf,
+      vendedores: data.vend,
+      semana: data.semana,
+      fecha_envio: fmtDT(Date.now())
+    }).then(function(res) {
+      if (res.status === 200) {
+        toast('✓ Reporte enviado — limpiando Firebase…', 'ok');
+        return cleanupDocs(docIds).then(function() { cleanExpired(); return true; });
+      }
+      return false;
+    });
+  }).catch(function(e) {
+    toast('Error: ' + (e.text || e.message || 'error desconocido'), 'er');
+    return false;
+  });
 }
-async function sendWeeklyNow(){ const btn=document.getElementById('btn-send-now'); btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Cargando datos de Firebase…'; await sendWeeklyEmail(); btn.disabled=false; btn.innerHTML=`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar reporte ahora`; }
-async function testEmail(){ const btn=document.getElementById('btn-test'); btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Enviando…'; try{ const res=await emailjs.send(SVC,TPL,{to_email:'juan@tabacaleraespert.com',subject:'Test PDV Neuquén — Firebase + EmailJS OK',message_html:'<p style="font-family:Arial,sans-serif"><strong>✓ Firebase y EmailJS funcionando.</strong><br>La app PDV Neuquén está lista para operar.</p>',total_visitas:'—',total_fotos:'—',vendedores:'—',semana:'Prueba',fecha_envio:fmtDT(Date.now())}); if(res.status===200)toast('Email de prueba enviado ✓','ok'); else toast('Error en EmailJS','err'); }catch(e){ toast(`Error: ${e.text||e.message}`,'err'); } btn.disabled=false; btn.innerHTML=`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Enviar email de prueba`; }
+ 
+function sendNow() {
+  var btn = document.getElementById('bsn');
+  btn.disabled = true; btn.innerHTML = '<div class="sp"></div> Cargando datos…';
+  sendWeeklyEmail().finally(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar reporte ahora';
+  });
+}
+ 
+function doTest() {
+  var btn = document.getElementById('bte');
+  btn.disabled = true; btn.innerHTML = '<div class="sp"></div> Enviando…';
+  emailjs.send(SVC, TPL, {
+    to_email: DEST, subject: 'Test PDV Neuquén — Firebase + EmailJS OK',
+    message_html: '<p style="font-family:Arial,sans-serif"><strong>✓ Firebase y EmailJS funcionando.</strong><br>La app PDV Neuquén está operativa.</p>',
+    total_visitas: '—', total_fotos: '—', vendedores: '—', semana: 'Prueba', fecha_envio: fmtDT(Date.now())
+  }).then(function(res) {
+    if (res.status === 200) toast('Email de prueba enviado ✓', 'ok');
+    else toast('Error en EmailJS', 'er');
+  }).catch(function(e) {
+    toast('Error: ' + (e.text || e.message), 'er');
+  }).finally(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Enviar email de prueba';
+  });
+}
  
 // ── SCHEDULER ──
-function msUntilNextSat13(){ const now=arNow(),t=new Date(now),d=(6-t.getDay()+7)%7||7; t.setDate(t.getDate()+d); t.setHours(13,0,0,0); if(t<=now)t.setDate(t.getDate()+7); return Math.max(t-now,1000); }
-function updateNextSend(){ const ms=msUntilNextSat13(),d=new Date(arNow().getTime()+ms),el=document.getElementById('next-send'); if(el)el.textContent=`Próximo envío: ${d.toLocaleDateString('es-AR',{weekday:'long',day:'2-digit',month:'long'})} a las 13:00 hs`; }
-function scheduleWeekly(){ if(ST.timer)clearTimeout(ST.timer); ST.timer=setTimeout(async()=>{ await sendWeeklyEmail(); scheduleWeekly(); },msUntilNextSat13()); updateNextSend(); }
+function msUntilNextSat13() {
+  var now = arNow(), t = new Date(now);
+  var d = (6 - t.getDay() + 7) % 7 || 7;
+  t.setDate(t.getDate() + d); t.setHours(13, 0, 0, 0);
+  if (t <= now) t.setDate(t.getDate() + 7);
+  return Math.max(t - now, 1000);
+}
+function updateNextSend() {
+  var ms = msUntilNextSat13();
+  var d = new Date(arNow().getTime() + ms);
+  var el = document.getElementById('ns');
+  if (el) el.textContent = 'Próximo envío: ' + d.toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: 'long' }) + ' a las 13:00 hs';
+}
+function scheduleWeekly() {
+  if (ST.timer) clearTimeout(ST.timer);
+  ST.timer = setTimeout(function() { sendWeeklyEmail().then(function() { scheduleWeekly(); }); }, msUntilNextSat13());
+  updateNextSend();
+}
  
 // ── RESTORE SESSION ──
-(function(){ try{ const s=JSON.parse(localStorage.getItem('pdv_sess')||'{}'); if(s.v&&s.l){ ST.vendedor=s.v; ST.localidad=s.l; document.getElementById('hname').textContent=s.v; document.getElementById('hloc').textContent=s.l; document.getElementById('screen-login').classList.remove('active'); document.getElementById('screen-main').classList.add('active'); initMap(); startGPS(); scheduleWeekly(); loadMyRecs(); } }catch(e){} })();
+(function() {
+  try {
+    var s = JSON.parse(localStorage.getItem('pdv_sess') || '{}');
+    if (s.v && s.l) {
+      ST.vend = s.v; ST.loc = s.l;
+      document.getElementById('hn').textContent = s.v;
+      document.getElementById('hl').textContent = s.l;
+      document.getElementById('sl').classList.remove('active');
+      document.getElementById('sm').classList.add('active');
+      initMap(); startGPS(); scheduleWeekly(); loadMyRecs();
+    }
+  } catch (e) {}
+})();
  
-document.addEventListener('touchmove',e=>{ if(e.target.closest('.content'))return; e.preventDefault(); },{passive:false});
+document.addEventListener('touchmove', function(e) {
+  if (e.target.closest('.cnt')) return;
+  e.preventDefault();
+}, { passive: false });
 </script>
 </body>
 </html>
+
